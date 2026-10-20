@@ -3,11 +3,13 @@
 Share the method always. Before publishing the mod itself:
 
 - [ ] **EULA.** Most restrict reverse engineering; what that means depends on where you live. Read it.
-- [ ] **Publisher's modding policy.** Policies differ a lot, and some prohibit AI-assisted
-      materials, which matters for a mod built with agents. If it's unclear, email the
-      publisher's modding contact and ask; keep the mod repo private until they answer.
-- [ ] **Anti-cheat and online play.** If the mod needs anti-cheat off, it's offline/single-player
-      only and says so loudly. Never ship or point people at a bypass.
+- [ ] **Publisher's modding policy.** The user has checked the publisher's current guidance on
+      what it supports and permits, including AI-assisted materials where relevant. Record
+      sources, dates and unresolved questions; the user decides whether to seek clarification.
+- [ ] **Anti-cheat and online play.** The user has checked publisher guidance for the intended
+      modes, including any documented modding modes, launch options and anti-cheat requirements.
+      Describe the mod's tested scope and relevant requirements clearly. Don't assume that
+      anti-cheat means offline-only, or that a working mod is approved for online play.
 - [ ] **Redistribution.** Your own code only. No game files, repacked game data or extracted assets.
       Data paks built from the game's own files are a grey area: check before shipping them.
 - [ ] **Branding.** No logos, nothing that looks official. "Unofficial, non-commercial, not

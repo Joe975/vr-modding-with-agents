@@ -68,6 +68,10 @@ The [test-driver contract](skills/vr-mod-test-harness/references/test-driver.md)
 and vehicle scenario examples. Implement the driver and game observations in the consuming mod;
 the kit supplies expectation/query tools, not a universal game adapter.
 
+The user is responsible for checking what the game's publisher supports and permits for
+modding, anti-cheat and online play, and choosing the project's scope. The research pass gathers
+dated sources and flags uncertainty; this kit doesn't impose a blanket offline-only rule.
+
 **Status:** distilled from one complete mod build. Not yet tested from a clean checkout in both
 agents, so expect rough edges. The voice capture, interleave, frame check, trace query and
 expectation scripts have unit tests (`tests/test_kit.py`); the live microphone path has only been used on one machine.

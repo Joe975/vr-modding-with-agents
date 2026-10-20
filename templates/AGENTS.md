@@ -1,7 +1,7 @@
 # [Game] VR mod
 
-Adds VR to [game] ([engine], [graphics API]) for [headset]. [If the game has anti-cheat or online
-play: offline/single-player only.]
+Adds VR to [game] ([engine], [graphics API]) for [headset].
+Project scope: [user's chosen modes and relevant publisher guidance; see RESEARCH.md].
 
 ## Before you change anything
 
@@ -28,7 +28,11 @@ play: offline/single-player only.]
 - **One run owns the game install.** Whoever has the game running owns its files and the headset;
   other sessions don't launch the game or install or replace the mod's files until that run ends.
 - **Always clean up.** The launcher removes the mod after every run, even on failure.
-- **Never** touch anti-cheat, online play or anything that would help bypass them.
+- **Publisher guidance and user responsibility.** The user is responsible for checking what the
+  game's publisher supports and permits for mods, anti-cheat and online play, and deciding the
+  project's scope. Help by finding dated official sources, describing relevant requirements
+  and flagging uncertainty. Record their decision in `RESEARCH.md` and `STATUS.md`; don't impose
+  a blanket offline-only rule or treat technical feasibility as publisher approval.
 - Every tunable value (thresholds, offsets, angles) is a live setting, not a constant.
 - **Discover capabilities before choosing interactions.** Camera mode and input mode are separate
   decisions. Use only the game's actual actions and available hooks; combat, physical grabbing,

@@ -16,8 +16,12 @@ recommendation the human can argue with.
   proven core beats hand-rolling (e.g. REFramework-derived cores, UEVR for Unreal).
 - **Modding guides and tools for the game and engine.** How mods load (a `dxgi.dll` proxy, an ASI
   loader, a mod manager), data paks, modders' test scenes or autostart flags, console commands.
-- **Anti-cheat.** If there is any, the mod is offline/single-player only. Never research, suggest
-  or implement a bypass.
+- **Publisher support, anti-cheat and online play.** Find the publisher's current modding policy
+  and any documented modding modes, launch options or anti-cheat requirements. Summarize what
+  they say, with sources and dates, and flag unknowns. The user is responsible for checking what
+  the publisher supports and permits, and choosing the project's scope. Don't infer an
+  offline-only restriction simply because anti-cheat or online play exists; distinguish
+  technical feasibility from publisher permission.
 
 ## 2. How the engine draws a frame
 
@@ -69,7 +73,8 @@ shows the camera hook is real before anything else is built on it.
 Write `RESEARCH.md` with sources for every claim:
 
 1. Existing mods and frameworks found, and whether to build on one.
-2. How mods load, anti-cheat, and the graphics API.
+2. How mods load, the graphics API, and publisher guidance on modding, anti-cheat and online play:
+   dated sources, unresolved questions and the user's chosen scope.
 3. Where the camera, projection and frame boundary live (or how you'll find them).
 4. Runtime recommendation and stereo approach, ranked with evidence.
 5. Gameplay contexts, available integration/observation hooks, unknowns and feasible interaction
