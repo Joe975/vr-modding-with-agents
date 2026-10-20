@@ -1,0 +1,16 @@
+{
+  "description": "Start in a fixed puzzle scene with an idle lever at fraction 0, a closed door and the lever selected within interaction range. Request interact and observe both game states.",
+  "duration_ms": 1500,
+  "frames": [
+    {"ms": 0},
+    {"ms": 500, "buttons": ["interact"]},
+    {"ms": 650},
+    {"ms": 1500}
+  ],
+  "expect": [
+    {"metric": "puzzle.lever_fraction", "min": 0.95, "max": 1.0},
+    {"metric": "puzzle.door_open", "equals": true},
+    {"metric": "unintended_actions.#", "equals": 0},
+    {"metric": "terminal", "equals": "completed"}
+  ]
+}

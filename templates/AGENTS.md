@@ -5,9 +5,9 @@ play: offline/single-player only.]
 
 ## Before you change anything
 
-- Read `STATUS.md` (the shared scratch pad; add a dated entry before you stop) and `RESEARCH.md`
-  if it exists. Build on what's there; don't redo or undo another agent's work. Old handoff notes
-  are historical: check the latest status before acting on them.
+- Read `STATUS.md` (the shared scratch pad; add a dated entry before you stop), `RESEARCH.md` and
+  `CONTROLS.md` if they exist. Build on what's there; don't redo or undo another agent's work.
+  Old handoff notes are historical: check the latest status before acting on them.
 - Decisions, measurements and open issues go in versioned files with dates and run or commit IDs.
   Nothing should depend on chat history or private memory.
 
@@ -30,6 +30,13 @@ play: offline/single-player only.]
 - **Always clean up.** The launcher removes the mod after every run, even on failure.
 - **Never** touch anti-cheat, online play or anything that would help bypass them.
 - Every tunable value (thresholds, offsets, angles) is a live setting, not a constant.
+- **Discover capabilities before choosing interactions.** Camera mode and input mode are separate
+  decisions. Use only the game's actual actions and available hooks; combat, physical grabbing,
+  skeletal IK and virtual gamepad output are optional. Record action semantics, contexts,
+  integration routes and observable success conditions in `CONTROLS.md`.
+- **Requested input isn't a game outcome.** Verify the game accepted/performed the action.
+  Release/neutralise outgoing controls on context changes and focus/tracking loss, and prevent
+  held inputs from becoming unrelated actions on return.
 
 ## Commands
 
@@ -46,4 +53,5 @@ Fill these in as the tooling gets built.
 - `vr-mod-research`: the research pass. Run it before writing mod code.
 - `vr-mod-test-harness`: see, play and measure without the human.
 - `vr-playtest-loop`: voice-recorded playtests and the reproduce-before-fix loop.
-- `vr-controls-design`: control archetypes, body zones and default controls.
+- `vr-controls-design`: capability discovery, camera/input choices, context-specific actions,
+  optional combat/body interactions and applicable defaults.

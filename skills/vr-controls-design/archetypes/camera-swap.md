@@ -1,10 +1,11 @@
 # Archetype: camera swap
 
-Replace the game's camera with a VR camera and change nothing else. Players keep a normal
-controller (or the VR controllers mapped as one) and the game plays exactly as it did flat.
+Replace the game's camera with a VR camera. Players keep the game's existing input devices
+(gamepad, keyboard/mouse, wheel, or VR controllers mapped to existing inputs).
+Gameplay actions retain their existing semantics.
 
-**Good for:** a first milestone for basic VR support in any game; proving the stereo and head
-tracking work before touching input.
+**Good for:** a first milestone where camera hooks permit it; proving stereo and head tracking
+before changing input.
 
 **Watch out for:** motion sickness. The game's camera still swings, shakes, chases the character
 and gets driven by the right stick while the player's body stands still. For third-person games

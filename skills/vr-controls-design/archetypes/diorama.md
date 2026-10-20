@@ -1,19 +1,20 @@
 # Archetype: diorama
 
-For third-person games: the world is scaled down like a tabletop miniature and viewed from a fixed
-spot above and behind the character, while the game's own gamepad layout does everything.
+An external view of the game world, optionally scaled down like a tabletop miniature. Keep the
+game's controls or choose tracked pointing/selection where useful; a gamepad is not required.
 
-**Good for:** third-person games, especially ones with big environments and crowds. Also a
-low-risk first milestone.
+**Good for:** third-person games, strategy games and games where an overview is useful. Also a
+possible first milestone when direct character embodiment isn't wanted.
 
-**Why it's comfortable:** the view stays put while the character runs around in it. The player's
-head moves the view a little but never drives the character or the game camera, so there's none
-of the camera swing and chase that makes a straight [camera swap](camera-swap.md) sickening.
+**Comfort goal:** a stable view while characters or objects move within it. Choose an anchor and
+explicit repositioning policy; automatically chasing a character can reintroduce the camera
+motion this approach is intended to avoid. Verify comfort with the human.
 
 **Build:**
 
-- World scale as a setting (start with the world at 1/10 scale).
-- Fixed anchor above and behind the character; recentre on a button puts the diorama back in front.
-- Game input untouched: locomotion, turning and aiming stay the game's own.
+- World scale as a setting (1/10 scale is a tabletop starting point, not a required scale).
+- Stable anchor relative to a chosen area or subject; recentre puts the view back in front.
+- Keep existing input unless tracked selection is chosen. For pointing, dragging or issuing
+  commands, see [interaction patterns](../topics/interaction-patterns.md).
 - Optional shoulder variant: a closer over-the-shoulder anchor, same rules.
 - Cutscenes: hold the anchor steady or show them on a panel; see [defaults](../topics/defaults.md).

@@ -51,8 +51,10 @@ the game events before each note:
 python .agents/skills/vr-playtest-loop/scripts/interleave.py [session]/transcript.md [mod log] --context 15 > timeline.md
 ```
 
-Now "the gun's aiming low" sits next to `fire aim=(0.02,-0.31,0.95) hit=no`. Expect transcription
-errors and off-topic chatter; the timestamps matter more than the words.
+Now "the gun's aiming low" sits next to an aim/hit event, or "the lever didn't move" next to an
+interaction request and the unchanged puzzle state. Record the active context (on foot, vehicle,
+menu, etc.) so the same binding's different uses aren't confused. Expect transcription errors
+and off-topic chatter; the timestamps matter more than the words.
 
 ## Turning notes into work
 

@@ -13,6 +13,10 @@ Only what mod developers copy and use: `README.md`, `LICENSE`, `templates/`, `sk
   mod, and no references to the author's own project, notes, timeline or playtests. Turn a lesson
   from a specific mod into general advice ("a mod can report thousands of submitted pairs while
   the headset shows Waiting"), keeping any useful number as a starting default.
+- Check applicability beyond game names: combat, skeletons, virtual pads and on-foot locomotion
+  are optional capabilities, not universal prerequisites. Keep concrete patterns conditional;
+  distinguish requested actions from observed game outcomes. Exercise the harness examples for
+  melee, puzzle interaction and vehicles when changing the shared contracts.
 - **No writeup content.** The narrative guide, its images, the site and the author's working
   notes live elsewhere and are not part of this repo. Don't add them back.
 - Skills use the `SKILL.md` format with `name` and a trigger-rich `description`, and are written

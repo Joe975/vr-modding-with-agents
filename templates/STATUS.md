@@ -9,7 +9,9 @@ session (or the other agent) picks up the work.
 
 - Runtime: [OpenVR / OpenXR]
 - Stereo: [alternate-eye / same-frame]
-- Controls archetype: [camera swap / first-person full motion / diorama]
+- Camera mode(s): [embodied / cockpit / external / tabletop / other, per context]
+- Input mode(s): [existing controls / tracked pointing / tracked interaction / mixed, per context]
+- Capabilities and action mappings: [RESEARCH.md / CONTROLS.md; confirmed hooks and unknowns]
 - Launch for testing: [command]
 - Who owns the game install right now: [nobody / session, run folder, deadline]
 

@@ -1,0 +1,16 @@
+{
+  "description": "Start seated in a stationary powered vehicle on a clear flat test area, brake released. Steer right and apply throttle for one second, then neutralise. Driver axes: steer -1..1 (right positive), throttle 0..1. Measure distance and signed yaw change in the game.",
+  "duration_ms": 2000,
+  "frames": [
+    {"ms": 0},
+    {"ms": 500, "axes": {"steer": 0.5, "throttle": 0.25}},
+    {"ms": 1500},
+    {"ms": 2000}
+  ],
+  "expect": [
+    {"metric": "vehicle.distance_metres", "min": 0.5},
+    {"metric": "vehicle.yaw_degrees", "min": 5.0, "max": 45.0},
+    {"metric": "unintended_actions.#", "equals": 0},
+    {"metric": "terminal", "equals": "completed"}
+  ]
+}

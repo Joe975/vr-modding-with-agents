@@ -48,16 +48,32 @@ To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.
 | [skills/vr-mod-research](skills/vr-mod-research/SKILL.md) | Do the homework | The research pass before any code |
 | [skills/vr-mod-test-harness](skills/vr-mod-test-harness/SKILL.md) | Get the agent to test its own work | Letting the agent see, play and measure without you |
 | [skills/vr-playtest-loop](skills/vr-playtest-loop/SKILL.md) | Playtest | Voice-recorded playtests, reproduce-before-fix |
-| [skills/vr-controls-design](skills/vr-controls-design/SKILL.md) | Controls | Archetypes, body zones, combat and default controls |
+| [skills/vr-controls-design](skills/vr-controls-design/SKILL.md) | Controls | Game capabilities, camera/input choices, interaction patterns and applicable defaults |
 | [checklists/before-publishing.md](checklists/before-publishing.md) | Sharing | EULA, modding policy, anti-cheat, redistribution |
 
 **By hand:** copy the three files in `templates/` to your repo's root and fill in the brackets in
 `AGENTS.md`, then copy each folder under `skills/` into both `.agents/skills/` and
 `.claude/skills/`.
 
+## Adapting it to a game
+
+Start from the game's actions and the hooks available, then choose camera and input modes
+separately. Tracked aiming with button melee, a seated cockpit with ordinary steering, and a
+tabletop view with tracked selection are all valid combinations. Record the choices, contexts,
+action semantics and observable outcomes in the mod's `CONTROLS.md`.
+
+Combat, body zones, skeletal IK and virtual gamepad output are optional patterns. The controls
+skill also covers [objects, tools, puzzles and vehicles](skills/vr-controls-design/topics/interaction-patterns.md).
+The [test-driver contract](skills/vr-mod-test-harness/references/test-driver.md) has melee, puzzle
+and vehicle scenario examples. Implement the driver and game observations in the consuming mod;
+the kit supplies expectation/query tools, not a universal game adapter.
+
 **Status:** distilled from one complete mod build. Not yet tested from a clean checkout in both
 agents, so expect rough edges. The voice capture, interleave, frame check, trace query and
 expectation scripts have unit tests (`tests/test_kit.py`); the live microphone path has only been used on one machine.
+The 2026-10-20 revision separates game capabilities, camera and input choices, and adds cross-genre
+scenario examples tested against representative passing/failing metrics. These are contract tests,
+not live validation in multiple games.
 
 **Licence:** [MIT](LICENSE). Use it, change it, ship it in your own mods, commercial or not; just
 keep the copyright notice with any copies of the kit itself.

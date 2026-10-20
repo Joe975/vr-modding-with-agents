@@ -1,6 +1,6 @@
 ---
 name: vr-mod-research
-description: Research pass before writing any VR mod code for a flat-screen PC game. Use when starting a VR mod, when asked to "add VR to [game]", or before choosing a VR runtime (OpenXR/OpenVR) or stereo rendering approach. Searches for existing mods, same-engine VR frameworks and modding guides, then recommends a runtime and rendering approach with evidence in RESEARCH.md.
+description: Research pass before writing any VR mod code for a flat-screen PC game. Use when starting a VR mod, when asked to "add VR to [game]", or before choosing a runtime, stereo approach or interaction scope. Finds existing mods/frameworks and game capabilities, then records an evidence-based plan in RESEARCH.md.
 ---
 
 # VR mod research
@@ -27,7 +27,19 @@ recommendation the human can argue with.
 - Whether the engine already has a second camera or multi-view path (picture-in-picture, split
   screen, mirrors, scope rendering). This decides whether same-frame stereo is possible.
 
-## 3. Recommend, with evidence
+## 3. Discover gameplay and integration capabilities
+
+- Inventory the game's actual contexts and actions from bindings, menus and modding APIs:
+  character movement, combat, tools, puzzles, vehicles, selection/UI, or others present.
+- Establish what a mod can control: camera, digital/analog input, aim/target, object transforms,
+  skeleton/IK, collision and gameplay state. Separate confirmed hooks from untested possibilities.
+- Record input semantics that matter: tap versus hold/release, analog ranges, timing, targeting
+  and context-dependent bindings. Don't assume melee, a humanoid body or a virtual pad exists.
+- Ask for the intended experience if unknown: camera support with existing controls, tracked
+  interaction, external/tabletop view, seated cockpit, or a mixture. Choose camera and input
+  independently; defer detailed mappings to `vr-controls-design`.
+
+## 4. Recommend, with evidence
 
 **Runtime.** OpenXR works with every headset. OpenVR is SteamVR only but gives Index skeletal
 finger tracking and SteamVR Input with little work. Recommend for the human's headset and the
@@ -46,7 +58,7 @@ Don't default to alternate-eye because it's quicker to get running. If the game 
 same-frame, time spent on alternate-eye is mostly wasted. If same-frame looks possible, recommend
 it and say what's needed.
 
-## 4. Prove the hook cheaply
+## 5. Prove the hook cheaply
 
 Before any headset work, the first experiment is on the flat screen: shift the camera by a known
 amount and check the scene moves by the predicted fraction of the screen width. That one test
@@ -60,7 +72,9 @@ Write `RESEARCH.md` with sources for every claim:
 2. How mods load, anti-cheat, and the graphics API.
 3. Where the camera, projection and frame boundary live (or how you'll find them).
 4. Runtime recommendation and stereo approach, ranked with evidence.
-5. The first flat-screen experiment.
+5. Gameplay contexts, available integration/observation hooks, unknowns and feasible interaction
+   scope. Include the evidence needed to distinguish a requested action from its game outcome.
+6. The first flat-screen experiment.
 
 Then fill in what you learnt in `AGENTS.md`'s brackets, add a `STATUS.md` entry, and ask the human
 which headset and input they care about if it's still unknown. Wait for them to agree the plan

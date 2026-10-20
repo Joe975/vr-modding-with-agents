@@ -1,6 +1,6 @@
 ---
 name: vr-mod-test-harness
-description: Build and use the test harness that lets the agent check a VR mod without a human in the headset - seeing the headset image (SteamVR VR View or eye snapshots), driving controllers and poses with a scripted test driver, and measuring with a gameplay trace and benchmark, all returning short verdicts instead of images and raw logs. Use when tempted to ask the human to "put the headset on and check", when an issue can't be reproduced, when setting up launch/test tooling for a VR mod, or when screenshots and trace reading are eating the context.
+description: Build and use a VR mod test harness with eye-image checks, scripted inputs/poses, capability-specific gameplay observations and short verdicts. Use when setting up launch/test tooling, reproducing control or rendering issues, or checking what can be verified without a human in the headset.
 ---
 
 # VR mod test harness
@@ -49,13 +49,16 @@ Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the re
 ## Play
 
 A test driver feeds scripted controller actions and poses in at the VR backend boundary, through
-the same gesture detectors and pad mapping as real controllers. Contract:
+the same applicable recognizers and integration routes as real controllers. Contract and
+melee, puzzle and vehicle examples:
 [references/test-driver.md](references/test-driver.md).
 
 Use it to reproduce every reported control issue before fixing it. "Sideways dodges go forward"
-becomes a scripted dodge per direction and view heading that measures displacement in the trace;
-it fails before the fix, passes after, and stays as a regression (check that removing the fix
-fails it). Write the pass condition into the scenario as an `expect` list and judge each run
+becomes a direction/view-heading test measuring displacement; "the lever doesn't operate"
+becomes a selected-target interaction test measuring puzzle state. Use poses to test recognizers,
+action inputs to test mapping, and game observations to test outcomes. A requested input is
+never proof the game performed it. Keep the failing scenario as a regression after fixing it
+(check that removing the fix fails it). Write the pass condition as an `expect` list and judge each run
 with `scripts/check_expect.py scenario.json run.metrics.json`, so a run reads as a few PASS/FAIL
 lines and the trace is only opened when something fails.
 
@@ -63,9 +66,10 @@ lines and the trace is only opened when something fails.
 
 - **Trace**: a fixed-rate JSON-lines log of the player, the game's view of the player, and every
   decision the mod made. Fields: [references/trace.md](references/trace.md).
-- **Session summary script**: boils a trace down to one page (offset medians, drift per minute
-  split at re-anchor points, presses per action, gesture outcomes, warnings). Read it after every
-  run instead of asking how it felt.
+- **Session summary script**: boils a trace down to one page (requested versus observed actions,
+  context changes, gesture outcomes, warnings and relevant capability metrics). Offset/drift
+  measurements apply only where tracked body/camera alignment is meaningful. Read it after
+  every run; human feedback still decides feel and comfort.
 - **Query, don't read.** A trace runs to megabytes per minute. Use
   `scripts/trace_query.py trace.jsonl --count` for what's in it, then `--around <event> --window 1
   --fields t,<path>,... --every 3` for the few seconds that matter. Output is tab-separated and

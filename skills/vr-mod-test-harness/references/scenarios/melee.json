@@ -1,0 +1,16 @@
+{
+  "description": "Start in combat at a fixed practice target within attack reach, idle and facing it. Request one existing attack and observe the game's accepted attack target; this does not test physical collision.",
+  "duration_ms": 1500,
+  "frames": [
+    {"ms": 0},
+    {"ms": 500, "buttons": ["attack"]},
+    {"ms": 650},
+    {"ms": 1500}
+  ],
+  "expect": [
+    {"metric": "combat.attacks.#", "equals": 1},
+    {"metric": "combat.attacks.0.target", "equals": "practice_target"},
+    {"metric": "unintended_actions.#", "equals": 0},
+    {"metric": "terminal", "equals": "completed"}
+  ]
+}

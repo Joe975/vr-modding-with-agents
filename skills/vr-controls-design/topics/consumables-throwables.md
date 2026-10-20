@@ -1,14 +1,18 @@
 # Consumables and throwables
 
-Grab it from its [body zone](body-zones.md), then use it with the motion it'd take in real life:
-throw forward, raise it to the mouth, slap it on.
+If these actions exist and physical use is chosen, select an item through a button, inventory or
+[body zone](body-zones.md). A throw, mouth or application gesture can then request its game action.
+Keep a button fallback. Don't assume selecting an item creates a physically simulated object.
 
 - **Throw on release with speed.** Throw when the grip is released while the hand moves forward
   fast enough; 1.5 m/s is a reasonable starting threshold.
-- **Measure relative to the head**, so walking or turning doesn't count as throwing.
-- **A slow release puts it back** without using it or triggering anything else on that grip.
+- **Separate intentional motion from locomotion.** Head-relative velocity is one starting point;
+  test head turns, walking and vehicle motion so those don't count as throwing.
+- **A slow release cancels or puts it back if supported**, without triggering another grip action.
 - **Check how the game does it first.** Tap to throw or hold to aim? Does it fly along the camera
-  or the weapon's aim? A hold-to-aim game can't have a put-back. The flight usually still follows
-  the game's own aim and ballistics, not the hand's velocity; say so if the human expects otherwise.
+  or a separate target? Does releasing commit, and is there a cancel action? A put-back requires
+  a reliable cancel or deferring activation until commitment; don't promise it otherwise. If the
+  gesture sends a throw action, the game still owns aim and ballistics. Hand-driven trajectories
+  require separate hooks; state which implementation is supported.
 - **Decide who owns the grip.** If the same grip also blocks, the throw's follow-through must not
-  turn into a block: require the hand lowered before the next gesture.
+  turn into a block or another action: require release/re-arm before the next interaction.

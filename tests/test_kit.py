@@ -2,6 +2,7 @@ import contextlib
 import datetime as dt
 import io
 import importlib.util
+import json
 import re
 import unittest
 from pathlib import Path
@@ -232,6 +233,53 @@ class CheckExpectTests(unittest.TestCase):
         self.assertIn("= missing", results[0][1])
         with self.assertRaises(ValueError):
             expect.check([{"metric": "terminal"}], self.METRICS)
+
+
+class ScenarioExampleTests(unittest.TestCase):
+    """Exercise the shipped expectations with observed outcomes, not requested inputs."""
+
+    EXAMPLES = HARNESS.parent / "references" / "scenarios"
+    RUNS = {
+        "melee": (
+            {"combat": {"attacks": [{"target": "practice_target"}]}},
+            {"combat": {"attacks": []}},
+        ),
+        "puzzle": (
+            {"puzzle": {"lever_fraction": 1.0, "door_open": True}},
+            {"puzzle": {"lever_fraction": 0.0, "door_open": False}},
+        ),
+        "vehicle": (
+            {"vehicle": {"distance_metres": 2.0, "yaw_degrees": 15.0}},
+            {"vehicle": {"distance_metres": 2.0, "yaw_degrees": 0.0}},
+        ),
+    }
+
+    def examples(self):
+        for name, outcomes in self.RUNS.items():
+            with self.subTest(example=name):
+                scenario = json.loads((self.EXAMPLES / f"{name}.json").read_text(encoding="utf-8"))
+                yield scenario, outcomes
+
+    def test_documented_expectations_accept_observed_results_and_reject_ignored_actions(self):
+        for scenario, (good, ignored) in self.examples():
+            common = {"terminal": "completed", "unintended_actions": []}
+            # No head/hand/weapon bones, IK or virtual gamepad metrics are needed.
+            passed = expect.check(scenario["expect"], common | good)
+            self.assertTrue(all(ok for ok, _ in passed), passed)
+            self.assertTrue(any(not ok for ok, _ in expect.check(scenario["expect"], common | ignored)))
+            self.assertTrue(any(not ok for ok, _ in expect.check(scenario["expect"], common)))
+            wrong_context = common | good | {"unintended_actions": ["menu_confirm"]}
+            self.assertTrue(any(not ok for ok, _ in expect.check(scenario["expect"], wrong_context)))
+
+    def test_examples_have_bounded_keyframes_and_finish_with_neutral_input(self):
+        for scenario, _ in self.examples():
+            frames = scenario["frames"]
+            times = [frame["ms"] for frame in frames]
+            self.assertEqual(times[0], 0)
+            self.assertEqual(times, sorted(set(times)))
+            self.assertEqual(times[-1], scenario["duration_ms"])
+            self.assertEqual(frames[-1], {"ms": scenario["duration_ms"]})
+            self.assertTrue(any(frame.get("buttons") or frame.get("axes") for frame in frames))
 
 
 class KitStructureTests(unittest.TestCase):
