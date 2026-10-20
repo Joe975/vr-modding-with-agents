@@ -7,7 +7,7 @@ session (or the other agent) picks up the work.
 
 ## Current state
 
-- Runtime: [OpenVR / OpenXR]
+- Runtime: [OpenXR (default) / OpenVR, and why]
 - Stereo: [alternate-eye / same-frame]
 - Camera mode(s): [embodied / cockpit / external / tabletop / other, per context]
 - Input mode(s): [existing controls / tracked pointing / tracked interaction / mixed, per context]
