@@ -1,6 +1,7 @@
 # Standard defaults
 
-Apply these without asking; they're settings the human can change.
+Use these as the starting point without waiting for a decision, then tell the human what you set.
+They're all live settings the human can change once they've felt them.
 
 - **Move:** smooth locomotion on the left stick, head-relative by default (controller-relative as
   an option), stick click to sprint. Teleport as a comfort option only if the game allows it. If

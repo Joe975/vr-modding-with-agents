@@ -27,8 +27,8 @@ anything that changes how the game feels in the hand.
 3. The human picks the body actions in the headset. Don't build gestures before they've chosen.
    Every threshold is a live setting; reproduce each misfire they report before fixing it.
 
-> List every action in this game and how it's bound. Suggest which stay on buttons, which become
-> body gestures and which VR makes redundant. Don't build any gestures yet; I'll pick.
+Show the human a table (action, current binding, suggested home, why) and wait for their picks
+before building any gestures.
 
 ## 3. Build the body actions
 

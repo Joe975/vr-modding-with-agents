@@ -48,8 +48,8 @@ fails it).
   per-run folder, and always removes the mod afterwards.
 - **Fake eyes**: a synthetic mode with per-frame head poses and per-eye projections so stereo code
   runs with no headset attached.
-- **Tests on real code**: real detours, a mock of the game's middleware, real D3D12 on the WARP
-  device copying eye textures and reading them back.
+- **Tests on real code**: real detours, a mock of the game's middleware, and real GPU work where
+  you can get it (on D3D12, the WARP software device can copy eye textures and read them back).
 - **Headset awake**: an unworn headset stops the runtime rendering. Cover the proximity sensor, or
   turn off SteamVR's "Pause VR when headset is idle".
 - **Hot reload** for anything tuned by feel (head height, wrist angle).

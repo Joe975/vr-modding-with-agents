@@ -41,8 +41,9 @@ gesture is under test.
 
 ## Queueing
 
-A small CLI writes a request into a mailbox folder the running mod polls (every 50 ms or so): `run <scenario.json>`, `status`, `stop`. Each request gets a unique ID, its exact JSON is
-saved beside the mailbox so it can be re-queued, and a new launch uses a fresh mailbox so stale
+A small CLI writes a request into a mailbox folder the running mod polls (every 50 ms or so):
+`run <scenario.json>`, `status`, `stop`. Each request gets a unique ID, its exact JSON is saved
+beside the mailbox so it can be re-queued, and a new launch uses a fresh mailbox so stale
 requests never replay. Reject a start while another scenario is active.
 
 ## Using it

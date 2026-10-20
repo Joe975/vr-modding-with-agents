@@ -130,7 +130,7 @@ class KitStructureTests(unittest.TestCase):
 
     def test_repo_is_only_the_kit(self):
         # No writeup, site or personal working files at the top level.
-        allowed = {".git", ".gitignore", ".venv", "README.md", "templates", "skills", "checklists", "tests"}
+        allowed = {".git", ".gitignore", ".venv", "README.md", "LICENSE", "templates", "skills", "checklists", "tests"}
         self.assertEqual(sorted(p.name for p in ROOT.iterdir() if p.name not in allowed), [])
 
     def test_readme_has_the_agent_setup_section_and_prompt(self):

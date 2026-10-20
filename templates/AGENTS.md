@@ -1,11 +1,13 @@
 # [Game] VR mod
 
-Adds VR to [game] ([engine], [graphics API]) for [headset]. Offline/single-player only.
+Adds VR to [game] ([engine], [graphics API]) for [headset]. [If the game has anti-cheat or online
+play: offline/single-player only.]
 
 ## Before you change anything
 
-- Read `STATUS.md` (the shared scratch pad; add a dated entry before you stop) and `RESEARCH.md`.
-  Build on what's there; don't redo or undo another agent's work. Old handoff notes are historical: check the latest status before acting on them.
+- Read `STATUS.md` (the shared scratch pad; add a dated entry before you stop) and `RESEARCH.md`
+  if it exists. Build on what's there; don't redo or undo another agent's work. Old handoff notes
+  are historical: check the latest status before acting on them.
 - Decisions, measurements and open issues go in versioned files with dates and run or commit IDs.
   Nothing should depend on chat history or private memory.
 
@@ -20,12 +22,14 @@ Adds VR to [game] ([engine], [graphics API]) for [headset]. Offline/single-playe
   script, eye snapshot comparison, trace check or unit test) before the fix, and the same check
   passing after. If you can't reproduce it, say what you'd need.
 - **One run owns the game install.** Whoever has the game running owns its files and the headset;
-  other sessions don't launch, install or replace the DLL until that run ends.
+  other sessions don't launch the game or install or replace the mod's files until that run ends.
 - **Always clean up.** The launcher removes the mod after every run, even on failure.
 - **Never** touch anti-cheat, online play or anything that would help bypass them.
 - Every tunable value (thresholds, offsets, angles) is a live setting, not a constant.
 
 ## Commands
+
+Fill these in as the tooling gets built.
 
 - Build: [command]
 - Tests: [command]

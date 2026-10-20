@@ -12,8 +12,8 @@ and game actions become things you do with your body. The most work, and the mos
 2. [Standard defaults](../topics/defaults.md): locomotion, snap turn, recentre, calibration.
 3. Controllers drive the arms through the engine's own IK where it has one. Tracked fingers where
    the controller has them (e.g. Index skeletal curl).
-4. Stop running and other animations leaning the body into the view: an opt-in upright-torso
-   correction that removes the animation's lean.
+4. Stop running and other animations leaning the body into the view, with an opt-in correction
+   that keeps the upper body upright.
 5. [Weapons and combat](../topics/combat.md): guns aim from the wrist first, then the rest.
 6. [Body zones](../topics/body-zones.md) and [throwables](../topics/consumables-throwables.md),
    chosen with the human.

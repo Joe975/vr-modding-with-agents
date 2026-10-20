@@ -40,11 +40,11 @@ game rendering two eyes costs tens of milliseconds. Benchmark both if it matters
 | Approach | Trade-off |
 |---|---|
 | Same-frame stereo | Both eyes from one head pose each frame. Best result; needs a multi-view or second-camera path |
-| Alternate-eye | One eye per game frame. Easy, but halves fresh pairs per second, fast objects shift between eyes and temporal effects can smear |
+| Alternate-eye | One eye per game frame, so one stereo pair per two frames. Easy, but fast objects shift between eyes and temporal effects can smear |
 
-Don't default to alternate-eye because it's quicker to get running. An alternate-eye version can
-be up in an hour while same-frame takes a few, but if the game can do same-frame, the alternate-eye
-hour is wasted effort. If same-frame looks possible, recommend it and say what's needed.
+Don't default to alternate-eye because it's quicker to get running. If the game can do
+same-frame, time spent on alternate-eye is mostly wasted. If same-frame looks possible, recommend
+it and say what's needed.
 
 ## 4. Prove the hook cheaply
 
@@ -52,11 +52,16 @@ Before any headset work, the first experiment is on the flat screen: shift the c
 amount and check the scene moves by the predicted fraction of the screen width. That one test
 shows the camera hook is real before anything else is built on it.
 
-## Prompt the human can paste
+## Output
 
-> Research how to add VR to [game] on PC. Search the web first for existing VR mods of this game,
-> VR mods or frameworks for other games on the same engine, and modding guides for the game or
-> engine. Then find the graphics API, anti-cheat, and where the camera and projection live.
-> Rank the rendering approaches (same-frame stereo, alternate-eye) for this game specifically,
-> with evidence. Recommend OpenXR or OpenVR for [my headset] and [the input I want]. Write it to
-> RESEARCH.md with sources. Don't write mod code yet.
+Write `RESEARCH.md` with sources for every claim:
+
+1. Existing mods and frameworks found, and whether to build on one.
+2. How mods load, anti-cheat, and the graphics API.
+3. Where the camera, projection and frame boundary live (or how you'll find them).
+4. Runtime recommendation and stereo approach, ranked with evidence.
+5. The first flat-screen experiment.
+
+Then fill in what you learnt in `AGENTS.md`'s brackets, add a `STATUS.md` entry, and ask the human
+which headset and input they care about if it's still unknown. Wait for them to agree the plan
+before writing mod code.

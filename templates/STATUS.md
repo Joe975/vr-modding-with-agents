@@ -1,8 +1,9 @@
 # Status
 
-The agents' scratch pad for this mod. Newest entry at the top. Every session reads this first and
-adds a dated entry before it stops: what changed, the evidence (commit, run folder, test result),
-and what's next. Keep it factual; it's how the next session (or the other agent) picks up the work.
+The agents' scratch pad for this mod. Every session reads this first and adds a dated entry to the
+Log (newest first) before it stops: what changed, the evidence (commit, run folder, test result),
+and what's next. Keep the sections above the Log current. Keep it factual; it's how the next
+session (or the other agent) picks up the work.
 
 ## Current state
 

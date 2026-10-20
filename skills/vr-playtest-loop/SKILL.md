@@ -1,6 +1,6 @@
 ---
 name: vr-playtest-loop
-description: Run a voice-recorded VR playtest and turn the human's spoken complaints into reproduced, fixed and proven work items. Use when the human is about to playtest in the headset, says "record my feedback", "process the playtest", or hands over playtest notes; also for setting development goals between sessions.
+description: Run a voice-recorded VR playtest and turn the human's spoken complaints into reproduced, fixed and proven work items. Use when the human is about to playtest in the headset, says "record my feedback", "process the playtest", or hands over playtest notes.
 ---
 
 # VR playtest loop
@@ -13,16 +13,30 @@ description: Run a voice-recorded VR playtest and turn the human's spoken compla
 
 ## Recording
 
-`scripts/voice_capture.py` records the mic for the whole session, keeps the full WAV, and appends
-timestamped faster-whisper lines to `transcript.md`. Transcription is local (CPU, int8).
+`scripts/voice_capture.py` (in this skill's folder, e.g. `.agents/skills/vr-playtest-loop/scripts/`)
+records the mic for the whole session, keeps the full WAV, and appends timestamped faster-whisper
+lines to `transcript.md`. Transcription runs locally on the CPU and never needs the network once the
+model is downloaded.
+
+One-time setup, from the mod repo's venv:
 
 ```
-python -m pip install -r scripts/requirements.txt
-python scripts/voice_capture.py --list-devices
-python scripts/voice_capture.py --device "Valve" --out C:/abs/path/sessions/session-YYYYMMDD_HHMM
+python -m pip install -r .agents/skills/vr-playtest-loop/scripts/requirements.txt
+python -c "from faster_whisper import WhisperModel; WhisperModel('small.en', device='cpu', compute_type='int8')"
 ```
 
-- Download the Whisper model once beforehand (`small.en` by default); the script runs offline.
+The second line downloads the `small.en` model (a few hundred MB) into the Hugging Face cache. Ask
+the human before running it.
+
+Each session:
+
+```
+python .agents/skills/vr-playtest-loop/scripts/voice_capture.py --list-devices
+python .agents/skills/vr-playtest-loop/scripts/voice_capture.py --device "[mic name]" --out [absolute path]/sessions/session-YYYYMMDD_HHMM
+```
+
+- `--device` matches part of the microphone's name or its index ("Valve" picks a Valve Index
+  headset mic). `--out` must be an absolute path to a new folder.
 - Start it as a background task you'll be notified about, and confirm it printed `LISTENING`
   before telling the human to start.
 - It closes when the human says only "go ahead", when a `STOP` file appears in the session folder,
@@ -34,7 +48,7 @@ python scripts/voice_capture.py --device "Valve" --out C:/abs/path/sessions/sess
 the game events before each note:
 
 ```
-python scripts/interleave.py transcript.md mod.log --context 15 > timeline.md
+python .agents/skills/vr-playtest-loop/scripts/interleave.py [session]/transcript.md [mod log] --context 15 > timeline.md
 ```
 
 Now "the gun's aiming low" sits next to `fire aim=(0.02,-0.31,0.95) hit=no`. Expect transcription
@@ -42,13 +56,14 @@ errors and off-topic chatter; the timestamps matter more than the words.
 
 ## Turning notes into work
 
-> For each note, reproduce it without me: a test driver script, eye snapshots, the trace. Show it
-> failing, fix it, show it passing. If you can't reproduce something, tell me what you'd need.
+For each note: reproduce it without the human (a test driver script, eye snapshots, the trace),
+show it failing, fix it, and show it passing. Record each one in `STATUS.md`.
 
 If an issue can't be reproduced, either the harness has a gap to fix, or the note needs a better
-description from the human. Say which.
+description from the human. Say which, and what you'd need.
 
-## Between sessions
+## Keeping going between playtests
 
-Agents stop when they think they're done. Set the goal explicitly with `/goal` (Codex and Claude
-Code), e.g. "Fix all the issues I complained about in the last playtest".
+If the human wants you to work through the list unattended, suggest they set a standing goal with
+`/goal` in Codex or Claude Code, e.g. "Fix all the issues I complained about in the last
+playtest". Then work the list in `STATUS.md` until it's done or blocked on the headset.

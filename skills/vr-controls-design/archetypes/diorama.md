@@ -12,7 +12,7 @@ of the camera swing and chase that makes a straight [camera swap](camera-swap.md
 
 **Build:**
 
-- World scale as a setting (10x miniature is a reasonable start).
+- World scale as a setting (start with the world at 1/10 scale).
 - Fixed anchor above and behind the character; recentre on a button puts the diorama back in front.
 - Game input untouched: locomotion, turning and aiming stay the game's own.
 - Optional shoulder variant: a closer over-the-shoulder anchor, same rules.

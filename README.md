@@ -28,9 +28,9 @@ You've been asked to set up this kit in the user's mod repo (the current working
    - `checklists/before-publishing.md` -> `checklists/before-publishing.md`.
 3. Copy each folder under `skills/` into both `.agents/skills/` (Codex) and `.claude/skills/`
    (Claude Code), keeping the folder names. Both agents then find the same skills.
-4. If the user wants voice-recorded playtests, set up a Python venv in their repo and install
-   `.agents/skills/vr-playtest-loop/scripts/requirements.txt` into it. Ask before downloading the
-   Whisper model.
+4. Ask whether the user wants voice-recorded playtests. If so, make a Python venv in their repo
+   and follow the one-time setup in the `vr-playtest-loop` skill (it asks before downloading the
+   speech model). Otherwise skip it; they can add it later.
 5. Delete the temporary clone. Commit the setup if the repo uses git.
 6. Tell the user what you set up in two or three lines, then run the `vr-mod-research` skill for
    their game. Don't write mod code during the research pass.
@@ -58,3 +58,6 @@ To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.
 **Status:** distilled from one complete mod build. Not yet tested from a clean checkout in both
 agents, so expect rough edges. The voice capture and interleave scripts have unit tests
 (`tests/test_kit.py`); the live microphone path has only been used on one machine.
+
+**Licence:** [MIT](LICENSE). Use it, change it, ship it in your own mods, commercial or not; just
+keep the copyright notice with any copies of the kit itself.
