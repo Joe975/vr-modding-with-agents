@@ -46,8 +46,9 @@ recommendation the human can argue with.
 ## 4. Recommend, with evidence
 
 **Runtime.** OpenXR works with every headset. OpenVR is SteamVR only but gives Index skeletal
-finger tracking and SteamVR Input with little work. Recommend for the human's headset and the
-input they want, and put it behind a small backend interface either way. Don't pick OpenXR
+finger tracking and SteamVR Input with little work. OpenXR can get the fingers too, through
+`XR_EXT_hand_tracking` with the controller data source, at the cost of more work. Recommend for
+the human's headset and the input they want, and put it behind a small backend interface either way. Don't pick OpenXR
 expecting speed: the runtime's per-frame cost is usually well under a millisecond, while the
 game rendering two eyes costs tens of milliseconds. Benchmark both if it matters.
 

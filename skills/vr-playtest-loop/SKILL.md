@@ -67,7 +67,8 @@ description from the human. Say which, and what you'd need.
 ## Splitting the work
 
 A long session that does everything itself carries every screenshot, log and file it has read
-into every later request. Keep the coordinating session small:
+into every later request. The same goes outside the loop: start a new session for each new feature
+or unrelated change. Keep the coordinating session small:
 
 - **One orchestrator** holds the complaint list in `STATUS.md`, decides the order, and owns the
   game install and headset. It doesn't read code, traces or images itself.
