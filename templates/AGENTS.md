@@ -17,7 +17,11 @@ play: offline/single-player only.]
   VR View (or the mod's own eye snapshots), drive the controllers with the test driver, and read
   the trace and logs. Ask for the headset only for feel and comfort.
 - **Look, don't count.** A submission counter going up isn't proof an image reached the headset.
-  Confirm with an image.
+  Confirm with an image check (`frame_check.py` in the test-harness skill).
+- **Verdicts before evidence.** Every image and log you read is re-sent with every later request.
+  Read check verdicts and summaries first; open an image (the failure preview) or query the
+  trace only when a check fails. Hand checks and per-issue work to fresh sub-agents or worktree
+  sessions that report back verdicts and file paths.
 - **Reproduce before you fix.** Every reported issue gets a failing reproduction (test driver
   script, eye snapshot comparison, trace check or unit test) before the fix, and the same check
   passing after. If you can't reproduce it, say what you'd need.

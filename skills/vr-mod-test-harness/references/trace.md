@@ -21,6 +21,8 @@ Build it before the first playtest that's about feel.
   when you turn.
 
 Use `null` for anything missing rather than leaving it out, so "not tracked" differs from zero.
+JSON lines repeat every key on every row, so a trace grows to megabytes a minute. That's fine on
+disk; never read it raw. Agents query it with `scripts/trace_query.py`.
 
 ## Events
 
@@ -36,4 +38,5 @@ Use `null` for anything missing rather than leaving it out, so "not tracked" dif
 
 A script that turns a trace into one page: offset medians, drift in cm per minute split at every
 legitimate re-anchor (recentre, cutscene, character change), presses per action, gesture outcomes
-and warnings. Read it after every run.
+and warnings. Keep it to about a page. Read it after every run; drill into the trace with
+`trace_query.py --around <event>` only for what the summary flags.

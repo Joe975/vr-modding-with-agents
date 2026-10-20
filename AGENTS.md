@@ -20,6 +20,6 @@ Only what mod developers copy and use: `README.md`, `LICENSE`, `templates/`, `sk
 
 ## Before you commit
 
-Run `python -m unittest tests.test_kit` (needs `numpy`). It checks the scripts, the skill
+Run `python -m unittest tests.test_kit` (needs `numpy` and `pillow`). It checks the scripts, the skill
 frontmatter, links, that the repo holds only the kit, and that no game-specific names slipped in.
 CI runs the same tests on every push.

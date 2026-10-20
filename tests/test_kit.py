@@ -1,4 +1,6 @@
+import contextlib
 import datetime as dt
+import io
 import importlib.util
 import re
 import unittest
@@ -8,10 +10,11 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = ROOT / "skills" / "vr-playtest-loop" / "scripts"
+HARNESS = ROOT / "skills" / "vr-mod-test-harness" / "scripts"
 
 
-def load(name):
-    spec = importlib.util.spec_from_file_location(name, SCRIPTS / f"{name}.py")
+def load(name, folder=SCRIPTS):
+    spec = importlib.util.spec_from_file_location(name, folder / f"{name}.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     return module
@@ -19,6 +22,9 @@ def load(name):
 
 voice = load("voice_capture")
 inter = load("interleave")
+frames = load("frame_check", HARNESS)
+tq = load("trace_query", HARNESS)
+expect = load("check_expect", HARNESS)
 
 
 class VoiceCaptureTests(unittest.TestCase):
@@ -103,6 +109,129 @@ class InterleaveTests(unittest.TestCase):
         log = ["2026-10-18T01:19:05Z focus lost"]
         out = inter.interleave(inter.parse_notes(TRANSCRIPT), log, context=15)
         self.assertIn("focus lost", out.split("## 14:21:00")[0])
+
+
+def scene(seed, shape=(240, 360)):
+    # Smooth random "scene": low-res noise blown up and blurred a little.
+    rng = np.random.default_rng(seed)
+    coarse = rng.random((shape[0] // 12 + 2, shape[1] // 12 + 2))
+    img = np.kron(coarse, np.ones((12, 12)))[: shape[0], : shape[1]]
+    return (img + np.roll(img, 3, 0) + np.roll(img, 3, 1) + np.roll(img, (3, 3), (0, 1))) / 4
+
+
+def verdict(results):
+    return {line.split()[0] + ("-" + line.split()[1] if line.startswith("stereo") else ""): ok
+            for ok, line in results}
+
+
+class FrameCheckTests(unittest.TestCase):
+    def test_flat_frame_fails_blank_and_textured_frame_passes(self):
+        results = frames.run_checks({"left": np.zeros((100, 120))})
+        self.assertFalse(results[0][0])
+        self.assertTrue(frames.run_checks({"left": scene(1)})[0][0])
+
+    def test_known_bad_screen_is_rejected_and_other_scenes_are_not(self):
+        waiting = scene(2)
+        noisy = np.clip(waiting + np.random.default_rng(0).normal(0, 0.02, waiting.shape), 0, 1)
+        self.assertFalse(frames.run_checks({"left": noisy}, reject=[("waiting", waiting)])[1][0])
+        self.assertTrue(frames.run_checks({"left": scene(3)}, reject=[("waiting", waiting)])[1][0])
+
+    def test_golden_reference_survives_resolution_change_but_not_a_different_scene(self):
+        golden = scene(4, (480, 720))
+        capture = golden[::2, ::2]
+        self.assertGreater(frames.similarity(capture, golden), 0.9)
+        self.assertLess(frames.similarity(scene(5), golden), 0.6)
+
+    def test_shift_sign_and_size(self):
+        wide = scene(6, (240, 400))
+        left, right = wide[:, 10:370], wide[:, 4:364]  # left[x] == right[x + 6]
+        dx, dy = frames.shift(left, right)
+        self.assertEqual((dx, dy), (-6, 0))
+
+    def test_stereo_pair_with_disparity_passes(self):
+        wide = scene(7, (240, 400))
+        results = frames.run_checks({"left": wide[:, 10:370], "right": wide[:, 2:362]})
+        self.assertTrue(all(ok for ok, _ in results), results)
+
+    def test_stereo_catches_mono_copy_wrong_scene_and_vertical_offset(self):
+        tall = scene(8, (300, 360))
+        mono = verdict(frames.run_checks({"left": tall[:240], "right": tall[:240].copy()}))
+        self.assertFalse(mono["stereo-eyes"])
+        other = verdict(frames.run_checks({"left": tall[:240], "right": scene(9)}))
+        self.assertFalse(other["stereo-correlation"])
+        offset = verdict(frames.run_checks({"left": tall[:240], "right": tall[30:270]}))
+        self.assertFalse(offset["stereo-shift"])
+
+    def test_cli_writes_previews_only_on_failure(self):
+        try:
+            from PIL import Image
+        except ImportError:
+            self.skipTest("Pillow not installed")
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            good, flat = Path(tmp) / "good.png", Path(tmp) / "flat.png"
+            Image.fromarray((scene(10) * 255).astype(np.uint8)).save(good)
+            Image.fromarray(np.zeros((900, 1600), np.uint8)).save(flat)
+            with contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(frames.main([str(good)]), 0)
+                self.assertEqual(frames.main([str(flat), "--max-side", "400"]), 1)
+            self.assertFalse(good.with_suffix(".preview.png").exists())
+            with Image.open(flat.with_suffix(".preview.png")) as preview:
+                self.assertEqual(max(preview.size), 400)
+
+
+TRACE = sorted([
+    {"t": 0.0, "type": "header", "hz": 30},
+    *[{"t": i / 10, "type": "sample", "metrics": {"head_offset_metres": [0.1 * i, None, 0.0]}} for i in range(1, 50)],
+    {"t": 2.05, "type": "event", "event": "dodge", "detail": "left"},
+    {"t": 4.0, "type": "event", "event": "focus_lost"},
+], key=lambda r: r["t"])
+
+
+class TraceQueryTests(unittest.TestCase):
+    def test_count_summarises_without_rows(self):
+        out = tq.counts(TRACE)
+        self.assertIn("52 records, 0.000-4.900 s", out)
+        self.assertIn("49\tsample", out)
+        self.assertIn("1\tevent dodge", out)
+
+    def test_window_around_event_keeps_events_and_downsamples_samples(self):
+        rows = tq.query(TRACE, around="dodge", width=0.5, every=2)
+        self.assertEqual([r["t"] for r in rows], [1.6, 1.8, 2.0, 2.05, 2.2, 2.4])
+
+    def test_fields_dotted_paths_nulls_and_limit(self):
+        rows = tq.query(TRACE, type_="sample", start=1.0, end=1.3)
+        out = tq.format_rows(rows, ["t", "metrics.head_offset_metres.0", "metrics.head_offset_metres.1"], limit=2)
+        self.assertEqual(out.splitlines(), [
+            "t\tmetrics.head_offset_metres.0\tmetrics.head_offset_metres.1",
+            "1.000\t1.000\t-", "1.100\t1.100\t-", "... 2 more rows (narrow the window, raise --every or --limit)"])
+
+    def test_events_default_to_their_own_keys(self):
+        rows = tq.query(TRACE, type_="event")
+        self.assertEqual(tq.format_rows(rows, tq.default_fields(rows), 10).splitlines()[0], "t\ttype\tevent\tdetail")
+
+
+class CheckExpectTests(unittest.TestCase):
+    METRICS = {"terminal": "completed", "root": {"right_metres": 0.62, "forward_metres": 0.11},
+               "dodge_windows": [{"right_metres": 0.6}], "error": None}
+
+    def test_min_max_equals_count_and_index(self):
+        results = expect.check([
+            {"metric": "root.right_metres", "min": 0.5},
+            {"metric": "root.forward_metres", "max": 0.08, "why": "no forward drift"},
+            {"metric": "terminal", "equals": "completed"},
+            {"metric": "dodge_windows.#", "equals": 1},
+            {"metric": "dodge_windows.0.right_metres", "min": 0.5, "max": 1.0},
+        ], self.METRICS)
+        self.assertEqual([ok for ok, _ in results], [True, False, True, True, True])
+        self.assertEqual(results[1][1], "root.forward_metres = 0.110 (max 0.08)  [no forward drift]")
+
+    def test_missing_metric_and_non_numbers_fail(self):
+        results = expect.check([{"metric": "root.up_metres", "min": 0}, {"metric": "terminal", "min": 0}], self.METRICS)
+        self.assertEqual([ok for ok, _ in results], [False, False])
+        self.assertIn("= missing", results[0][1])
+        with self.assertRaises(ValueError):
+            expect.check([{"metric": "terminal"}], self.METRICS)
 
 
 class KitStructureTests(unittest.TestCase):

@@ -62,6 +62,26 @@ show it failing, fix it, and show it passing. Record each one in `STATUS.md`.
 If an issue can't be reproduced, either the harness has a gap to fix, or the note needs a better
 description from the human. Say which, and what you'd need.
 
+## Splitting the work
+
+A long session that does everything itself carries every screenshot, log and file it has read
+into every later request. Keep the coordinating session small:
+
+- **One orchestrator** holds the complaint list in `STATUS.md`, decides the order, and owns the
+  game install and headset. It doesn't read code, traces or images itself.
+- **One worker per complaint or feature**, each in its own git worktree with a fresh context. The
+  worker reproduces, fixes and proves its one item, commits, and reports back a few lines:
+  verdict, commit, the evidence file paths and anything it needs from the human.
+- **Checks go to throwaway contexts too.** Launch, run the scenario, read `frame_check.py` and
+  `check_expect.py`, and return the verdict lines. If a worker needs to look at an image, it
+  looks at the failure preview, in its own context.
+- **One run at a time.** Worktrees are separate, but the game install, the runtime and the headset
+  are shared. The orchestrator queues runs (or workers take a lock file) and every run removes
+  the mod afterwards.
+
+When a worker's report doesn't settle it, the orchestrator asks that worker a follow-up question
+rather than reading the evidence itself.
+
 ## Keeping going between playtests
 
 If the human wants you to work through the list unattended, suggest they set a standing goal with

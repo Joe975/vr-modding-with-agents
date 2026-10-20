@@ -31,11 +31,17 @@ JSON, one per scenario, versioned in the mod repo:
     {"ms": 1000, "move": [-1, 0]},
     {"ms": 1400},
     {"ms": 4500}
+  ],
+  "expect": [
+    {"metric": "root_displacement_view_axes.right_metres", "max": -0.5, "why": "moved left"},
+    {"metric": "root_displacement_view_axes.forward_metres", "min": -0.08, "max": 0.08},
+    {"metric": "terminal", "equals": "completed"}
   ]
 }
 ```
 
-Keyframes hold until the next one. Name buttons by what they do (`dodge`, `parry`), not by
+`expect` is the pass condition, written against the metrics file the run writes (next section);
+`scripts/check_expect.py` turns it into PASS/FAIL lines. Keyframes hold until the next one. Name buttons by what they do (`dodge`, `parry`), not by
 controller button, so scenarios survive remapping. Add wrist and head poses as keyframes when a
 gesture is under test.
 
@@ -46,8 +52,18 @@ A small CLI writes a request into a mailbox folder the running mod polls (every 
 beside the mailbox so it can be re-queued, and a new launch uses a fresh mailbox so stale
 requests never replay. Reject a start while another scenario is active.
 
+## Run output
+
+Each run writes a small metrics JSON beside its trace slice: the request ID, how it ended
+(`completed`, `stopped`, `focus_lost`), and the numbers the scenario is about, already worked
+out (root displacement in body and view axes, camera offset before and after, gesture outcomes).
+Write it compact (no indentation) and list each event once. The agent reads the verdict and this
+file; the trace is for when they disagree or something fails.
+
 ## Using it
 
-1. Write a scenario that should show the reported problem.
-2. Run it and check the trace: it should fail the way the human described.
-3. Fix, re-run, and keep the scenario as a regression. Confirm removing the fix fails it.
+1. Write a scenario that should show the reported problem, with an `expect` list for the fixed
+   behaviour.
+2. Run it: `check_expect.py` should fail the way the human described.
+3. Fix, re-run until it passes, and keep the scenario as a regression. Confirm removing the fix
+   fails it.

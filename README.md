@@ -56,8 +56,8 @@ To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.
 `.claude/skills/`.
 
 **Status:** distilled from one complete mod build. Not yet tested from a clean checkout in both
-agents, so expect rough edges. The voice capture and interleave scripts have unit tests
-(`tests/test_kit.py`); the live microphone path has only been used on one machine.
+agents, so expect rough edges. The voice capture, interleave, frame check, trace query and
+expectation scripts have unit tests (`tests/test_kit.py`); the live microphone path has only been used on one machine.
 
 **Licence:** [MIT](LICENSE). Use it, change it, ship it in your own mods, commercial or not; just
 keep the copyright notice with any copies of the kit itself.

@@ -12,5 +12,5 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.13"
-      - run: pip install numpy
+      - run: pip install numpy pillow
       - run: python -m unittest tests.test_kit
