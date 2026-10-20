@@ -49,6 +49,7 @@ To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.
 | [skills/vr-mod-test-harness](skills/vr-mod-test-harness/SKILL.md) | Get the agent to test its own work | Letting the agent see, play and measure without you |
 | [skills/vr-playtest-loop](skills/vr-playtest-loop/SKILL.md) | Playtest | Voice-recorded playtests, reproduce-before-fix |
 | [skills/vr-controls-design](skills/vr-controls-design/SKILL.md) | Controls | Game capabilities, camera/input choices, interaction patterns and applicable defaults |
+| [skills/vr-mod-game-patches](skills/vr-mod-game-patches/SKILL.md) | Game patches | Pinning the game build, one table for every address, porting it with a binary diff, a live check a fallback can't fool |
 | [checklists/before-publishing.md](checklists/before-publishing.md) | Sharing | EULA, modding policy, anti-cheat, redistribution |
 
 **By hand:** copy the three files in `templates/` to your repo's root and fill in the brackets in

@@ -42,6 +42,10 @@ Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the re
   PASS/FAIL line per check, exit code 1 on failure, previews only on failure. Thresholds are
   starting defaults; calibrate them on a few known-good and known-bad captures of your own.
   Golden images only work for captures at a fixed scripted pose in a fixed scene.
+- **A fallback can pass a frame check.** If the mod falls back to a flat panel or mono view when
+  stereo stops, "frames submitted" keeps climbing. Run checkers should require the primary path
+  (real stereo pairs from the stereo producer) and fail on any stop or fallback line. Prove each
+  checker on a known-bad run before trusting its PASS.
 - **Focus trap.** Bringing the mirror window to the foreground takes focus from the game, which can
   stop the game's controller input. Make the mod survive focus loss, and prefer having the mod save
   its own per-eye snapshots (an opt-in flag) so tests never touch the mirror.
