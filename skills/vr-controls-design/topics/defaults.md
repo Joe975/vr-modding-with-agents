@@ -16,6 +16,22 @@ them; a cockpit, external view or cursor-driven game need not use character loco
 - **Recentre and calibrate:** one button recentres and levels to gravity. Head height, forward
   offset and, for tracked hands, per-hand wrist angle are live settings. Expect several tries,
   which is why they must be live.
+- **Player height, in an embodied view:** don't give every player the developer's eye height at
+  the same scale, and don't lower the camera to a short player's real eye height either (the view
+  ends up inside the character's body). Scale instead: multiply head-relative motion, eye
+  separation and hand offsets by `reference_eye_height / player_eye_height`, so the floor sits
+  where each player's body expects it and hands land in the same places on the character. Keep
+  head placement offsets constant in game units, and scale body-zone offsets by the same factor.
+  Measure standing eye height on recentre (standing space has the floor at 0); only a higher
+  reading replaces the stored one, so a crouched recentre can't shrink the player, plus an
+  explicit re-measure control. Clamp the factor (0.75-1.35 is a reasonable start). Leave
+  speed-based gestures in physical units until a playtest says otherwise. Views that aren't
+  embodied (diorama, external camera) keep a factor of 1.
+- **Haptics:** a pulse confirms what the player can't see: a gesture or body-zone grab firing,
+  a weapon firing, a hit taken or blocked. Bridge the game's own rumble output to the
+  controllers where it has one, routed to the right hand, and add mod pulses for actions the mod
+  invented. Expose intensity and an off switch as live settings. Check which haptic output the
+  runtime binding exposes before planning on it.
 - **Visible body in an embodied view:** hide obstructing head geometry; stop animations leaning
   the body into the view. Games without a visible body don't need skeletal hooks for this.
 - **Handedness:** support dominant-hand choice and independent movement/turn bindings. Don't
