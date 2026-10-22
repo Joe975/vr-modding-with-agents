@@ -292,7 +292,7 @@ class KitStructureTests(unittest.TestCase):
 
     def test_every_skill_has_name_and_description(self):
         skills = sorted(ROOT.glob("skills/*/SKILL.md"))
-        self.assertEqual(len(skills), 5)
+        self.assertEqual(len(skills), 6)
         for path in skills:
             front = path.read_text(encoding="utf-8").split("---")[1]
             self.assertRegex(front, rf"(?m)^name: {path.parent.name}$", path)

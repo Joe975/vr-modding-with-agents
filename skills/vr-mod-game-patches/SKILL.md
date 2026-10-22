@@ -41,12 +41,21 @@ single lookup for the running build's value:
 
 - `rva(build, reference_rva)`: the identity on the reference build, the table entry on a ported
   build, and 0 (refuse) for an unknown build or an address that isn't in the table.
-- `code(build, reference_rva, actual_bytes)`: compares only the bytes proven equal for that
-  build; anything longer, missing or unknown fails closed.
+- `code(build, reference_rva, actual_bytes, expected)`: checks only the bytes proven equal for
+  that build; anything longer, missing, at another address or unknown fails closed.
 
-The table is generated (one block per ported build), never hand-edited, and stores the new
-build's verified byte windows so the tests can run without the game binary. Never commit game
-binaries.
+**No game code in the repo or the DLL.** Expected code is a digest, not a byte array:
+`hashed(reference_rva, length, sha256)` of the reference build's bytes, hashed against the running
+build's bytes at run time. The table is generated (one block per ported build), never
+hand-edited, and holds for each entry the new RVA, the verified length and the delta: the offset
+and XOR of the bytes that differ between builds (the moved rip-relative and rel32 fields). On a
+ported build `code()` undoes the delta first, so the verified port hashes to the same digest and
+the guards accept exactly what a byte comparison accepted. Keep images of each build outside the
+repo (found through an environment variable) for a test that every digest matches both builds,
+skipped when the images are absent. Unit tests use a synthetic mode the game never enables: the
+reference code at (image, RVA) is a fixed pseudo-random stream and its port applies the table's
+delta. Never commit game binaries. The rest of the public-repo cleanup:
+[vr-mod-release](../vr-mod-release/SKILL.md).
 
 **A static test that every hard-coded address goes through the layer.** Scan the mod's sources
 for named address constants and hex literals inside the image's range, and fail on any use that
@@ -80,8 +89,10 @@ byte matchers fed the new build's bytes (the reference bytes must fail there).
    whose targets correspond). Data addresses need a conflict-free entry from step 4.
 7. **Record a signature** per code entry: the shortest masked pattern (8 to 64 bytes is a
    starting range) that is unique in the old code and finds exactly the translated address in
-   the new code. On an unknown build the mod can scan the signatures and log candidate addresses
-   for the next port, but it never hooks from a scan.
+   the new code. Signatures are game bytes: generate them into an ignored build folder and
+   resolve them with an offline scan script against the new exe, not from inside the mod or the
+   repo. On an unknown build the mod logs the identity and a warning to port the table, and
+   hooks nothing.
 8. **Struct layouts.** Diff the non-stack displacements in recompiled functions, and check the
    functions the mod's offsets were read from are unchanged. Write down which layouts were argued
    from unchanged code and which were observed.

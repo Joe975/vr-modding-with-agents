@@ -19,6 +19,30 @@ Verify the game's selected target and resulting state, not just the mod's highli
   objects. Preserve hover, click, drag, cancel and scroll semantics where the UI needs them.
   Confirm the selected item/unit and command outcome, including accidental double activation.
 
+## The game targets from its own camera
+
+Use targets and interaction prompts are usually chosen by the game's gameplay camera: a cone or
+cylinder along its heading, a focus cone around its crosshair, and a radius. If the mod anchors
+the headset view to a stable reference and leaves that camera where it was (body following does
+this), the game keeps targeting along a heading the player stopped looking at long ago. Every
+press then fails, except by walking into the object. The prompt itself is often drawn on the
+game's own HUD canvas, which the headset never shows, so the player can't tell a missing target
+from a wrong button and reports "shove the hand in and hope".
+
+- Find the game's selection rules in its data or scripts (viewer cones, radii, the input and its
+  hold time) and record them in `CONTROLS.md`.
+- Log the native camera's heading and the gaze relative to it. A checker that lists each use
+  press with its misalignment turns the complaint into numbers.
+- Fix by steering the native camera to follow the gaze through the game's own look input, with
+  its response curve measured and inverted, a deadband and a re-engage band; or re-aim the
+  game's target selection from the headset if a hook allows it. Check that movement, dodges and
+  aim that compensate for native camera yaw still agree once it moves.
+- Bring the prompt into the headset: crop the centre of the native HUD canvas onto a head-locked
+  plane with the native camera's angular mapping. The focused prompt sits near the native
+  crosshair, so it always lands in the crop.
+- Judge the follow by gaze motion: a look is a gaze movement over a threshold, settling is
+  measured after the gaze stops, and hunting only counts while the gaze is still.
+
 ## Vehicles and seated contexts
 
 Choose a stable cockpit or external view independently of steering input. Retain gamepad,

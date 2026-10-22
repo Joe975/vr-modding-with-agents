@@ -34,6 +34,10 @@ them; a cockpit, external view or cursor-driven game need not use character loco
   runtime binding exposes before planning on it.
 - **Visible body in an embodied view:** hide obstructing head geometry; stop animations leaning
   the body into the view. Games without a visible body don't need skeletal hooks for this.
+  Posture corrections fight game logic that reads the skeleton: squaring a torso the game turns
+  toward its target can make its aim check fail, so a weapon fires once per burst. Bisect such
+  regressions by switching each override off in turn, and stand the override down while the game
+  needs its posture (ramp out on trigger press, back a couple of seconds after the last).
 - **Handedness:** support dominant-hand choice and independent movement/turn bindings. Don't
   blindly swap asymmetric equipment or device roles; test each interaction's intended mapping.
 - **Menus:** a panel in front of the player, centred and fully visible, is a useful start. Choose
@@ -43,6 +47,10 @@ them; a cockpit, external view or cursor-driven game need not use character loco
   state over guessing from camera distance), keep the horizon level, and don't let head turns
   swing a camera that's far from the character. A scripted camera flying through the level is a
   fast way to make the player sick: consider freezing the view or showing cutscenes on a panel.
+  When the game pulls its camera a few metres back for an animation (a get-up, a finisher, a
+  ledge drop) and the view follows it, the player sees their body from outside with the hands
+  floating. Stand the eyes beside the character at the learned standing eye height instead, keep
+  the first-person heading, and return when the game's camera settles.
 - **Context changes:** walking, vehicles, menus and scripted sequences may need different input
   and camera policies. Release outgoing controls and prevent held inputs carrying into a new
   action. Test the transition as well as each mode in isolation.

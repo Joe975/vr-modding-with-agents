@@ -44,6 +44,12 @@ They need not share a binding, a hand or a recognizer.
   not a universal parry duration. Check repeated entries and the game's cooldown/window rules.
 - Distinguish guarding from other uses of the same space, such as supporting a weapon or using
   a tool. Orientation gates, context and explicit arming can help; tune them for each mapping.
+- **If the human can't find the pose, draw it.** A small guide in both eyes, placed from the
+  recognizer's own settings (zone centre, height, required angle), with a colour per detector
+  state: not in the zone; in the zone but wrong orientation; right pose but blocked, and why;
+  active. Draw it into the eye images so every runtime and snapshot shows it, never on the menu
+  panel, and hide it when the action isn't available. Test that the drawn target satisfies the
+  recognizer for the defaults and for random retunes, so a loosened rule moves the guide.
 
 ## Evasion
 

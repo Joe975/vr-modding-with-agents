@@ -37,6 +37,9 @@ Project scope: [user's chosen modes and relevant publisher guidance; see RESEARC
 - **Pin the game build and fail closed.** Every hard-coded address goes through the per-build
   lookup table; an unknown build or mismatched bytes means no hook. If the headset suddenly shows
   nothing, check the exe's build first. Porting to a new build: the `vr-mod-game-patches` skill.
+- **Nothing of the game's in the repo.** No decompiler output, disassembly, crash dumps or game
+  data fixtures; byte patterns from game code are digests, never literals. Shipping to players:
+  the `vr-mod-release` skill.
 - **Discover capabilities before choosing interactions.** Camera mode and input mode are separate
   decisions. Use only the game's actual actions and available hooks; combat, physical grabbing,
   skeletal IK and virtual gamepad output are optional. Record action semantics, contexts,
@@ -61,5 +64,6 @@ Fill these in as the tooling gets built.
 - `vr-mod-test-harness`: see, play and measure without the human.
 - `vr-playtest-loop`: voice-recorded playtests and the reproduce-before-fix loop.
 - `vr-mod-game-patches`: build pinning, the address table, and porting the mod after a game update.
+- `vr-mod-release`: the player package and the public-repo cleanup, once the human decides to share.
 - `vr-controls-design`: capability discovery, camera/input choices, context-specific actions,
   optional combat/body interactions and applicable defaults.

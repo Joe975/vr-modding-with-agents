@@ -46,6 +46,10 @@ Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the re
   stereo stops, "frames submitted" keeps climbing. Run checkers should require the primary path
   (real stereo pairs from the stereo producer) and fail on any stop or fallback line. Prove each
   checker on a known-bad run before trusting its PASS.
+- **A crop passes a size check.** An eye image of the right size with no letterbox can still be
+  the left half of a wider frame at twice the magnification. Compare aspect at every stage (swap
+  chain, eye copies, colour targets, upscaler input) and compare a capture against a known whole
+  eye at the same pose: a crop differs far more than a resize does.
 - **Focus trap.** Bringing the mirror window to the foreground takes focus from the game, which can
   stop the game's controller input. Make the mod survive focus loss, and prefer having the mod save
   its own per-eye snapshots (an opt-in flag) so tests never touch the mirror.
@@ -65,6 +69,14 @@ never proof the game performed it. Keep the failing scenario as a regression aft
 (check that removing the fix fails it). Write the pass condition as an `expect` list and judge each run
 with `scripts/check_expect.py scenario.json run.metrics.json`, so a run reads as a few PASS/FAIL
 lines and the trace is only opened when something fails.
+
+**Replay recorded traces through the production rules.** When a playtest says a gesture "stopped
+working", feed the human's recorded traces through the same recognizer code the mod runs,
+offline, and count outcomes per motion: which were rejected, and by which gate. Retune, then
+replay every recorded session before a live run, with a flag to switch each change off, so a fix
+for one complaint is shown not to break earlier ones (intentional swings counted rise, incidental
+motions counted stay at zero). It needs the recognizer built as a library the replay tool can
+link, and traces carrying every input the recognizer reads.
 
 ## Measure and record
 
@@ -95,6 +107,10 @@ lines and the trace is only opened when something fails.
 - **Headset awake**: an unworn headset stops the runtime rendering. Cover the proximity sensor, or
   turn off SteamVR's "Pause VR when headset is idle".
 - **Hot reload** for anything tuned by feel (head height, wrist angle).
+- **Transient failures:** one refused capture, one stale poll or one late frame is normal. Don't
+  switch a feature off for the run on the first; require a run of consecutive failures with no
+  success between (30 is a starting point), log the first with its cause, and carry the count in
+  the periodic status line.
 - **Driving menus**: computer use can click through menus, but synthetic key taps may not reach the
   game; send mod hotkeys as window messages. Every computer-use step returns a screenshot, so
   clicking through menus and watching loading screens is the most image-hungry thing an agent

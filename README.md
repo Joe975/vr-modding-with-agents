@@ -50,6 +50,7 @@ To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.
 | [skills/vr-playtest-loop](skills/vr-playtest-loop/SKILL.md) | Playtest | Voice-recorded playtests, reproduce-before-fix |
 | [skills/vr-controls-design](skills/vr-controls-design/SKILL.md) | Controls | Game capabilities, camera/input choices, interaction patterns and applicable defaults |
 | [skills/vr-mod-game-patches](skills/vr-mod-game-patches/SKILL.md) | Game patches | Pinning the game build, one table for every address, porting it with a binary diff, a live check a fallback can't fool |
+| [skills/vr-mod-release](skills/vr-mod-release/SKILL.md) | Sharing | The player package (installer, launch profile, updates) and a public repo with none of the game's code in it |
 | [checklists/before-publishing.md](checklists/before-publishing.md) | Sharing | EULA, modding policy, anti-cheat, redistribution |
 
 **By hand:** copy the three files in `templates/` to your repo's root and fill in the brackets in
@@ -78,7 +79,8 @@ agents, so expect rough edges. The voice capture, interleave, frame check, trace
 expectation scripts have unit tests (`tests/test_kit.py`); the live microphone path has only been used on one machine.
 The 2026-10-20 revision separates game capabilities, camera and input choices, and adds cross-genre
 scenario examples tested against representative passing/failing metrics. These are contract tests,
-not live validation in multiple games.
+not live validation in multiple games. The 2026-10-22 revision adds the release skill (player
+package, public-repo cleanup), distilled from a release being prepared, not one that has shipped.
 
 **Licence:** [MIT](LICENSE). Use it, change it, ship it in your own mods, commercial or not; just
 keep the copyright notice with any copies of the kit itself.
