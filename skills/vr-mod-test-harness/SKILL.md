@@ -90,10 +90,41 @@ link, and traces carrying every input the recognizer reads.
   `scripts/trace_query.py trace.jsonl --count` for what's in it, then `--around <event> --window 1
   --fields t,<path>,... --every 3` for the few seconds that matter. Output is tab-separated and
   capped at 50 rows.
+- **Run report against known states**: a script that reads any run's mod log (the agent's or a
+  playtest's) and lists the game states, refusal and error codes, fallbacks, stops, recoveries and
+  hangs it saw, marking anything missing from a versioned known-states table as `NEW`. A strict
+  mode exits non-zero on a `NEW` item or a verdict (stereo stopped for good, a hang); a learn mode
+  adds a run's states once a human has looked. Seed it from every old log: that alone tends to turn
+  up faults nobody reported.
+- **Hang watchdog**: when no frame is presented for ~10 s, the mod writes one thread-stack dump.
+  It is one per process, so a stall at startup can use it up; the launcher should also detect a
+  hang (status lines stop, window not responding) and take stacks itself.
 - **Benchmark**: PresentMon (pinned version) at a fixed checkpoint, with a mode switch that
   isolates costs (tracking only / copy only / full submit). Reject captures taken in menus, pause
   or cutscenes. Per-frame costs hiding in setup code (like re-validating the graphics adapter
   every frame) show up here long before anyone notices them in play.
+
+## Stereo side effects
+
+When the second eye is drawn by adding a camera or view to the game's own render list, the game
+runs its per-view code for both eyes, but also any per-frame code that happens to sit inside the
+view pass. Per-frame work done twice causes bugs that look unrelated to stereo: a resource release
+that isn't idempotent corrupts bookkeeping until a level teardown hangs; a temporal effect (eye
+adaptation, history ping-pong) steps twice per frame and the second eye runs ahead of the first.
+The extra view can also shift the game's own views (picture-in-picture, mirrors) into different
+slots, and anything the game derives from a slot number then indexes out of range.
+
+- **Count calls per eye.** Using hooks the mod already installs (no new ones to port per game
+  patch), count each hook's calls per frame in mono and in stereo. Label each hook per-view (should
+  double) or per-frame (must not). Flag a per-frame hook above ~1.25x its mono rate and a per-view
+  hook below ~1.75x (it skipped an eye); report mixed hooks without flagging. Wait for enough frames
+  in both buckets (loads and recoveries are mono, so a normal run has both).
+- **Audit the view pass once**, read-only: list the per-frame work inside it and say what would
+  confirm or rule out each risk. Turn the confirmed ones into guards that skip exactly the
+  duplicate, and log how often each guard fires and from which call site.
+- **Check the game's other views** while stereo is on: where they land in the render list, and
+  whether anything is indexed by that position. Holding stereo off while one is showing is a safe
+  first fix.
 
 ## Plumbing
 
@@ -114,5 +145,19 @@ link, and traces carrying every input the recognizer reads.
 - **Driving menus**: computer use can click through menus, but synthetic key taps may not reach the
   game; send mod hotkeys as window messages. Every computer-use step returns a screenshot, so
   clicking through menus and watching loading screens is the most image-hungry thing an agent
-  does. Skip menus with a direct test-scene launch, and have the mod log a `scene_ready` event
-  (or similar) that the launcher waits on instead of watching the screen.
+  does. Skip menus with a direct test-scene launch for most runs, and have the mod log a
+  `scene_ready` event (or similar) that the launcher waits on instead of watching the screen.
+- **But script the real menu flow too.** A direct launch never exercises startup screens, pause
+  menus, level exits or loads, so their bugs only turn up in playtests. Drive them with key presses
+  into the game window, keyed off the game's menu/loading state as the mod logs it rather than
+  screenshots, and keep a fixed tour (startup, into the game, pause, back, quit to title) that each
+  build runs, followed by the run report. Pitfalls: menus that open with nothing selected (the
+  first press only selects, so every count is off by one); keys only land while the game window
+  is in front, and the OS may refuse to bring a window started from a background process forward;
+  screenshotting a hung window blocks forever; a run whose VR session never started is testing a
+  different mod, so fail it; a launcher killed mid-run skips its cleanup, so check for leftover mod
+  files before the next launch. Read menu item positions off a screenshot once and record them;
+  don't guess.
+- **Bisect with switches**: let the launcher take one named feature switch out of an otherwise
+  normal launch, or add one diagnostic switch, and clear everything it doesn't set. Swapping in an
+  older build of the mod answers "is this a regression?".

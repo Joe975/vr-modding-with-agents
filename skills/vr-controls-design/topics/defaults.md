@@ -50,7 +50,15 @@ them; a cockpit, external view or cursor-driven game need not use character loco
   When the game pulls its camera a few metres back for an animation (a get-up, a finisher, a
   ledge drop) and the view follows it, the player sees their body from outside with the hands
   floating. Stand the eyes beside the character at the learned standing eye height instead, keep
-  the first-person heading, and return when the game's camera settles.
+  the first-person heading, and return when the game gives control back.
+- **Takeovers end when control returns, not when the camera does.** After a finisher, grapple or
+  similar, the game hands movement back to the player before its camera glides back to the head,
+  often by a second or two. Waiting for the camera leaves the player watching their character walk
+  off before the view cuts onto it. Detect control back from the game's state if it exposes it, or
+  from the character's root moving with the stick (e.g. 1.5 m/s or more within 30° of the stick's
+  direction for 0.1 s), and keep the camera return as a fallback. Also check the stick's heading
+  during a takeover: if it's read against the game's turned camera rather than the view, movement
+  goes off in an unrelated direction.
 - **Context changes:** walking, vehicles, menus and scripted sequences may need different input
   and camera policies. Release outgoing controls and prevent held inputs carrying into a new
   action. Test the transition as well as each mode in isolation.

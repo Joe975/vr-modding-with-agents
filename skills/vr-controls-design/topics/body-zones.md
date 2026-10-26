@@ -22,6 +22,10 @@ doesn't imply the game supports a physically held object. Use menus or buttons w
   in a zone when tracking or focus returns must re-arm first.
 - Give the selection ownership of its input until completion/cancellation. Suppress conflicting
   actions, such as a melee swing, tool activation or UI drag, during a zone grab.
+- Suppressing a gesture means pausing it, not resetting it. Where a reset latches the gesture
+  (must leave the pose before it can fire again), a zone the hand rests in at idle, such as a belt
+  zone for a relaxed hand, keeps every neighbouring gesture latched, and a fast move out of the zone
+  straight into the pose never fires. Test the move from each resting zone into each gesture.
 - Check what the button you send actually does in the game, in every context. A D-pad direction
   used for weapon select in one mode can be an emote or a squad command in another. Sometimes
   the accident is fun enough to keep as its own gesture; let the human decide.

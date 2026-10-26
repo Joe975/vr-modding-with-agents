@@ -74,7 +74,14 @@ line and a fix, one button whose label says what it will do, and nothing of the 
   preserve list and are merged per key: values the player changed stay, new keys and changed
   defaults come from the release. Keep the release's own copy alongside as the merge base.
 - **Startup feedback.** A modded launch can take minutes. Tail the mod's log for phase markers
-  (shaders compiling, VR session ready) and show them, so nobody assumes it hung.
+  (shaders compiling, VR session ready) and show them, so nobody assumes it hung. Read only the
+  new lines each poll: rescanning the whole log every half second grows until it takes a CPU core
+  in a long session.
+- **Strip the dev build's costs from the player build.** Debug overlays and test sliders closed by
+  default; periodic investigation dumps and verbose status lines behind the trace switch (they
+  cost hitches on the present thread and tens of MB of log an hour); hooks that do nothing in the
+  player profile not installed. Keep heavy hooks that fix crashes or carry stereo, and make them
+  cheaper later from a profile.
 - **Several ways to play are several buttons**, not a rebuild. If a camera or input mode is
   decided by which data files are installed, build every variant at install and offer each as
   its own Play button.
