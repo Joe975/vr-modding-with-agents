@@ -75,8 +75,9 @@ modding, anti-cheat and online play, and choosing the project's scope. The resea
 dated sources and flags uncertainty; this kit doesn't impose a blanket offline-only rule.
 
 **Status:** distilled from one complete mod build. Not yet tested from a clean checkout in both
-agents, so expect rough edges. The voice capture, interleave, frame check, trace query and
-expectation scripts have unit tests (`tests/test_kit.py`); the live microphone path has only been used on one machine.
+agents, so expect rough edges. The voice capture, interleave, frame check, trace query,
+expectation and eye flicker scripts have unit tests (`tests/test_kit.py`); the live microphone path
+and the both-eye mirror recorder have only been used on one machine.
 The 2026-10-20 revision separates game capabilities, camera and input choices, and adds cross-genre
 scenario examples tested against representative passing/failing metrics. These are contract tests,
 not live validation in multiple games. The 2026-10-22 revision adds the release skill (player

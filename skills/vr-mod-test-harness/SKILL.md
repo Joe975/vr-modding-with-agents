@@ -1,6 +1,6 @@
 ---
 name: vr-mod-test-harness
-description: Build and use a VR mod test harness with eye-image checks, scripted inputs/poses, capability-specific gameplay observations and short verdicts. Use when setting up launch/test tooling, reproducing control or rendering issues, or checking what can be verified without a human in the headset.
+description: Build and use a VR mod test harness with eye-image checks, both-eye headset recording, per-eye flicker measurement, scripted inputs/poses, capability-specific gameplay observations and short verdicts. Use when setting up launch/test tooling, reproducing control or rendering issues (including flicker or lighting that differs between the eyes), or checking what can be verified without a human in the headset.
 ---
 
 # VR mod test harness
@@ -18,6 +18,7 @@ should print a verdict first, and you only open the evidence when the verdict is
   full-size capture: a 720 px preview costs roughly a quarter of a full eye, a crop less still.
 - Runs: an `expect` list in each scenario, judged by `scripts/check_expect.py`.
 - Traces: `scripts/trace_query.py` for a few columns around an event, never the whole file.
+- Flicker: `scripts/eye_flicker.py` on a both-eye recording, never the video itself.
 - When an orchestrating agent hands a check to a worker or sub-agent, ask for the verdict lines
   and file paths back, not the evidence.
 
@@ -27,6 +28,11 @@ Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the re
 
 - **SteamVR's VR View** mirrors the headset to a desktop window. Set it to Both Eyes; a screenshot
   of it is a screenshot of the headset.
+- **Record both eyes, not OBS.** OBS's OpenVR capture records one eye (a right-eye checkbox), so a
+  clip can show the worse eye without anyone knowing. `scripts/mirror_capture/` builds a
+  background OpenVR client that records both eyes' mirror textures, downscaled on the GPU, with a
+  clock time per frame and no window focus change. Method:
+  [references/eye-flicker.md](references/eye-flicker.md).
 - **Look, don't count.** A mod can report thousands of submitted stereo pairs with zero failures
   while the headset shows SteamVR's Waiting screen. Only an image settles it, but a script can
   do the looking:
@@ -122,6 +128,11 @@ slots, and anything the game derives from a slot number then indexes out of rang
 - **Audit the view pass once**, read-only: list the per-frame work inside it and say what would
   confirm or rule out each risk. Turn the confirmed ones into guards that skip exactly the
   duplicate, and log how often each guard fires and from which call site.
+- **Flicker in one eye** usually means the second view reuses view-dependent state from the
+  first: a per-view selection (shadowed lights) written into a shared atlas by list position, or a
+  temporal history advanced once per view. Measure one-eye blips, then swap which pose each pass
+  renders and try both passes at the same pose:
+  [references/eye-flicker.md](references/eye-flicker.md).
 - **Check the game's other views** while stereo is on: where they land in the render list, and
   whether anything is indexed by that position. Holding stereo off while one is showing is a safe
   first fix.

@@ -26,6 +26,7 @@ inter = load("interleave")
 frames = load("frame_check", HARNESS)
 tq = load("trace_query", HARNESS)
 expect = load("check_expect", HARNESS)
+flicker = load("eye_flicker", HARNESS)
 
 
 class VoiceCaptureTests(unittest.TestCase):
@@ -235,6 +236,120 @@ class CheckExpectTests(unittest.TestCase):
             expect.check([{"metric": "terminal"}], self.METRICS)
 
 
+EYE_H, EYE_W = 88, 160
+
+
+def game_frames(n, edit=None, repeat=2):
+    """n game frames, each captured `repeat` times: a texture brightening smoothly."""
+    x = np.arange(EYE_W, dtype=np.float32)
+    frames = []
+    for t in range(n):
+        rgb = np.repeat(np.tile(40 + 0.4 * x + 0.5 * t, (EYE_H, 1))[..., None], 3, axis=2)
+        if edit:
+            edit(t, rgb)
+        frames += [rgb] + [rgb.copy() for _ in range(repeat - 1)]
+    return np.stack(frames)
+
+
+def write_stream(prefix, left, right, start="20:05:10"):
+    both = np.concatenate([left, right], axis=2).astype(np.uint8)
+    both.tofile(f"{prefix}.rgb")
+    Path(f"{prefix}.json").write_text(json.dumps({"width": 2 * EYE_W, "height": EYE_H, "eye_width": EYE_W, "downscale": 16, "format": "rgb24"}))
+    t0 = flicker.clock_seconds(start)
+    Path(f"{prefix}.times").write_text("".join(f"{i * 33.3:.1f} {flicker.clock_text(t0 + i * 0.0333)}\n" for i in range(len(both))))
+
+
+def spark_and_one_eye_loss(t, rgb, shift):
+    if t == 8:
+        rgb[22:33, 40 + shift:60 + shift] += 60  # a spark both eyes see, a little shifted
+    if t == 20 and shift:
+        rgb[55:66, 100:120] -= 30  # a light the right eye alone loses for one frame
+
+
+class EyeFlickerTests(unittest.TestCase):
+    def test_repeated_capture_frames_count_once(self):
+        self.assertEqual(len(flicker.unique_frames(flicker.luma(game_frames(30)))), 30)
+
+    def test_blip_on_a_still_view_is_not_taken_for_a_repeat(self):
+        still = game_frames(1, repeat=20)
+        still[10, 0:11, 0:20] += 60  # one cell lights for one frame, nothing else moves
+        gray = flicker.luma(still)
+        keep = flicker.unique_frames(gray)
+        self.assertEqual(list(keep), [0, 10, 11])
+        up, down, _ = flicker.blips(gray[keep])
+        self.assertEqual((int(up.sum()), int(down.sum())), (1, 0))
+
+    def test_one_frame_light_on_and_off_are_blips_and_lasting_change_is_not(self):
+        def edit(t, rgb):
+            if t == 12:
+                rgb[0:11, 0:20] += 60  # on for one game frame
+            if t == 25:
+                rgb[44:55, 100:120] -= 30  # off for one game frame
+            if t >= 30:
+                rgb[66:77, 0:20] += 60  # stays on
+        gray = flicker.luma(game_frames(40, edit))
+        up, down, _ = flicker.blips(gray[flicker.unique_frames(gray)])
+        self.assertEqual((int(up.sum()), int(down.sum())), (1, 1))
+        self.assertEqual((int(np.argmax(up)) + 1, int(np.argmax(down)) + 1), (12, 25))
+        self.assertEqual(int(flicker.blips(flicker.luma(game_frames(40)))[0].sum()), 0)
+
+    def test_one_eye_blips_leave_out_events_both_eyes_see(self):
+        left = flicker.luma(game_frames(30, lambda t, rgb: spark_and_one_eye_loss(t, rgb, 0), repeat=1))
+        right = flicker.luma(game_frames(30, lambda t, rgb: spark_and_one_eye_loss(t, rgb, 22), repeat=1))
+        self.assertEqual(flicker.one_eye_blips(left, right), (0, 1, 28))
+        self.assertEqual(flicker.one_eye_blips(left, left)[:2], (0, 0))
+        # Counted per eye, the shared spark still shows in the left eye.
+        self.assertEqual(int(flicker.blips(left)[0].sum()), 1)
+
+    def test_same_pose_eyes_match_after_the_fixed_shift(self):
+        wide = scene(11, (EYE_H, EYE_W + 40))[None] * 255
+        left, right = wide[..., 30:30 + EYE_W], wide[..., 6:6 + EYE_W]  # right[x + 24] == left[x]
+        dx, diff = flicker.aligned_difference(left, right)
+        self.assertEqual(dx, 24)
+        self.assertLess(diff, 0.01)
+        self.assertGreater(float(np.median(np.abs(left - right))), 1.0)
+
+    def test_marks_split_counts_by_condition(self):
+        marks = flicker.read_marks(["20:05:10.400 fix off", "noise line", "[skip] 20:05:11 not at start",
+                                    "20:05:10.800 fix on"])
+        self.assertEqual([label for _, label in marks], ["fix off", "fix on"])
+        left = game_frames(30, lambda t, rgb: spark_and_one_eye_loss(t, rgb, 0), repeat=1)
+        right = game_frames(30, lambda t, rgb: spark_and_one_eye_loss(t, rgb, 22), repeat=1)
+        times = flicker.clock_seconds("20:05:10") + np.arange(30) * 0.0333  # game frame 20 at 10.666
+        lines, worst = flicker.summarise(left, right, times, marks, events=True)
+        sections = "\n".join(lines).split("== ")
+        self.assertEqual([s.splitlines()[0] for s in sections[1:]], ["before marks", "fix off", "fix on"])
+        self.assertIn("right-only 1", sections[2])
+        self.assertIn("20:05:10.666  right-only", sections[2])
+        self.assertIn("right-only 0", sections[3])
+        self.assertGreater(worst, 5)
+
+    def test_stream_cli_gives_a_verdict_and_saves_event_frames(self):
+        import tempfile
+        left = game_frames(30, lambda t, rgb: spark_and_one_eye_loss(t, rgb, 0), repeat=1)
+        right = game_frames(30, lambda t, rgb: spark_and_one_eye_loss(t, rgb, 22), repeat=1)
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp) / "run"
+            write_stream(prefix, left, right)
+            l, _, times, info = flicker.load_stream(f"{prefix}.rgb")
+            self.assertEqual((l.shape, info["eye_width"]), ((30, EYE_H, EYE_W, 3), EYE_W))
+            self.assertAlmostEqual(times[1] - times[0], 0.033, places=3)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(flicker.main([str(prefix), "--max-one-eye", "2"]), 1)
+                self.assertEqual(flicker.main([str(prefix), "--from", "20:05:10.700", "--max-one-eye", "2"]), 0)
+                try:
+                    from PIL import Image
+                except ImportError:
+                    return
+                flicker.main([str(prefix), "--save-events", str(Path(tmp) / "events")])
+            self.assertIn("FAIL one-eye blips", out.getvalue())
+            saved = list((Path(tmp) / "events").glob("*_right.png"))
+            self.assertEqual(len(saved), 1)
+            with Image.open(saved[0]) as strip:
+                self.assertEqual(strip.size, (2 * EYE_W, 3 * EYE_H))
+
+
 class ScenarioExampleTests(unittest.TestCase):
     """Exercise the shipped expectations with observed outcomes, not requested inputs."""
 
@@ -283,7 +398,7 @@ class ScenarioExampleTests(unittest.TestCase):
 
 
 class KitStructureTests(unittest.TestCase):
-    def kit_files(self, suffixes=(".md", ".py", ".txt", ".json")):
+    def kit_files(self, suffixes=(".md", ".py", ".txt", ".json", ".cpp")):
         # Everything a user copies: the README, templates, skills and checklists (not these tests).
         for path in ROOT.rglob("*"):
             rel = path.relative_to(ROOT).parts
