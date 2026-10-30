@@ -27,6 +27,29 @@ them; a cockpit, external view or cursor-driven game need not use character loco
   explicit re-measure control. Clamp the factor (0.75-1.35 is a reasonable start). Leave
   speed-based gestures in physical units until a playtest says otherwise. Views that aren't
   embodied (diorama, external camera) keep a factor of 1.
+- **Post effects:** switch off motion blur, depth of field and anything that warps the finished
+  image (lens distortion, barrel or panini projection). Depth of field blurs whatever the eyes
+  converge on; a warp moves each eye's scene away from its projection, which puts the whole world
+  at the wrong depth. Check that "off" really removes each one, then check the image matches the
+  camera ([test harness](../../vr-mod-test-harness/SKILL.md#the-image-matches-the-camera)).
+- **HUD panels:** status panels head-locked below the line of sight, readable with a glance down
+  and clear of where the player aims. Starting defaults at 1.2 m: the main status strip about 19°
+  below straight ahead, a second panel about 27° below; both live settings.
+- **Crosshair where the weapon points:** a crosshair fixed to the player's face only marks the aim
+  when the head steers the aim. Where the gameplay camera and the head can point different ways
+  (gamepad aim, external or tabletop views):
+  - First person: lock the game's HUD canvas to the gameplay camera rather than the head: a plane
+    at a fixed distance in front of that camera, drawn into each eye with a per-eye projective map
+    (a 3x3 homography from eye image coordinates to canvas coordinates). Exact on the camera's line.
+  - External views: the eye is far from the gameplay camera, so a plane there has parallax and can
+    be seen edge-on. A direction alone can't place the crosshair; the hit point can. Read the aim
+    ray's hit point from the game's own targeting (it usually computes one every frame) and draw
+    the game's own crosshair there, facing the eye at the angular size it has on the gameplay
+    camera, so reload, heat and hit markers on it stay live. Leave that patch out of the
+    head-locked canvas so it doesn't show twice.
+  - Don't assume the crosshair is at the canvas centre: many third-person cameras look below the
+    aim. Its canvas position is the hit point projected through the gameplay camera, while the
+    game's own ray aims. Cut the patch wide enough for indicators beside the crosshair.
 - **Haptics:** a pulse confirms what the player can't see: a gesture or body-zone grab firing,
   a weapon firing, a hit taken or blocked. Bridge the game's own rumble output to the
   controllers where it has one, routed to the right hand, and add mod pulses for actions the mod

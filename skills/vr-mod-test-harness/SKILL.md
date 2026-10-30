@@ -137,6 +137,35 @@ slots, and anything the game derives from a slot number then indexes out of rang
   whether anything is indexed by that position. Holding stereo off while one is showing is a safe
   first fix.
 
+## The image matches the camera
+
+Each eye's image must show the world where that eye's projection says it is. A post effect that
+warps the finished image (lens distortion, barrel or panini projection, a sprint FOV kick, an
+upscaler fed the wrong input rectangle) breaks that without breaking anything you'd notice in one
+eye. A warp of a few pixels pushed outward in both eyes is a vergence error over the whole world:
+it looks roughly right, scale feels a bit off, and nobody reports it. It shows up when the mod draws
+something in 3D (a crosshair, a marker, a guide) and the player sees it double while looking at
+what it marks.
+
+- **Check where the image says straight ahead is.** In an eye snapshot at a known pose, pick lines
+  that run straight away from the camera in the world (floor grid lines, corridor edges), fit them,
+  and find where they meet at the horizon. Project the same direction through the eye's own world
+  and projection matrices. They should agree to a pixel or two. An offset mirrored in the two eyes
+  (left eye out to the left, right eye out to the right) is a warp, not a pose error. Record the
+  matrices beside every snapshot so this needs no guessing.
+- **Find the stage.** Rerun at native render resolution (no upscaler) and then with each suspect
+  post effect off (most engines expose them as data presets). The run where the offset drops to
+  about zero names the cause. Switch it off for the headset in the mod's data, and rerun the
+  check after every rebuild of that data.
+- **Check overlays against the scene, not against your own maths.** A test that the overlay lands
+  where your projection puts it only proves the projection agrees with itself. Measure the
+  horizontal shift between the eyes of the overlay and of the surface it marks, and compare: equal
+  shift means it sits on that surface. Match on a feature that doesn't repeat (an edge, a shadow
+  boundary); a regular texture or grid matches at several shifts and fools the comparison.
+- **Measure after stereo settles.** Many mods restart stereo a few times in the first seconds.
+  A mode switch or measurement in that window picks up its gaps and looks like a regression;
+  wait until stereo has run cleanly for a while, then switch.
+
 ## Plumbing
 
 - **Launcher**: installs the mod, launches straight into a test scene if the game has a modders'
