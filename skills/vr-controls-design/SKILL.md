@@ -63,4 +63,4 @@ Test expected activation, near misses, conflicting interactions and context/focu
 ## 5. Defaults and plumbing
 
 - [Movement, turning, calibration, menus, cutscenes](topics/defaults.md)
-- [Getting controller input into the game](topics/input-into-the-game.md)
+- [Getting input into the game, keeping on-screen prompts true](topics/input-into-the-game.md)

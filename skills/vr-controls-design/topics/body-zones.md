@@ -26,6 +26,12 @@ doesn't imply the game supports a physically held object. Use menus or buttons w
   (must leave the pose before it can fire again), a zone the hand rests in at idle, such as a belt
   zone for a relaxed hand, keeps every neighbouring gesture latched, and a fast move out of the zone
   straight into the pose never fires. Test the move from each resting zone into each gesture.
+- Force-sensing grips (Valve Index controllers, for example) read thumb presses. Pressing a face
+  button can squeeze the grip past the selection threshold, so a hand resting in a zone selects
+  something on every unlucky button press. Measure it per hand. Consume a squeeze that starts while
+  a thumb control on that hand is down: it selects nothing until it's released.
+- If the game has one "next weapon" input, one zone that always sends it can replace a zone per
+  weapon, and it still works while the held item is unknown. Let the human choose.
 - Check what the button you send actually does in the game, in every context. A D-pad direction
   used for weapon select in one mode can be an emote or a squad command in another. Sometimes
   the accident is fun enough to keep as its own gesture; let the human decide.

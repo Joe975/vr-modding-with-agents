@@ -40,8 +40,8 @@ from a wrong button and reports "shove the hand in and hope".
 - Bring the prompt into the headset: crop the centre of the native HUD canvas onto a head-locked
   plane with the native camera's angular mapping. The focused prompt sits near the native
   crosshair, so it always lands in the crop. Where the native camera and the head can point
-  different ways, lock that canvas to the native camera instead and move the crosshair to the aim
-  ray's hit point ([defaults](defaults.md)).
+  different ways, in plain gameplay lock that canvas to the native camera instead and move the
+  crosshair to the aim ray's hit point. Hubs and menus stay head-locked ([defaults](defaults.md)).
 - Judge the follow by gaze motion: a look is a gaze movement over a threshold, settling is
   measured after the gaze stops, and hunting only counts while the gaze is still.
 

@@ -13,6 +13,27 @@ attack timing, targeting and resource rules unless the human has chosen to chang
 - If two-handed support is wanted, define what the second hand controls: orientation, stability
   or a game action. Don't assume the game already implements any of those effects.
 
+## Where a weapon sits in the hand
+
+If the mod drives a visible weapon from a tracked hand, it needs the weapon's fit relative to the
+hand. That is often learned from an attachment socket on the skeleton, and from the socket readings
+the mod may also infer what is held.
+
+- **A socket only gives the fit while the weapon is on it.** With the weapon elsewhere, the same
+  socket can sit in another item's grip, and a fit learned then stays wrong for the life of the
+  character: the weapon and its aim ray are both off. Learn from the socket after the weapon has
+  stayed on it unbroken for about 250 ms (the first frames are a blend). Until then use the carried
+  weapon's pose relative to the hand. Once learned, keep it.
+- **A socket reading isn't the loadout.** Melee stances and other animations can move a weapon
+  between sockets, so "on the left socket" need not mean the sidearm is out. Tie a weapon change to
+  the switch input plus the weapon leaving both sockets soon after (within 0.5 s, then off them for
+  0.5 s), and let each press settle at most one change.
+- **A respawn is not a new reading.** The first socket reading of a new character can be a melee
+  carry or a spawn animation. Start from the primary weapon rather than trusting it.
+- **Test the angle, not the label.** "Held in the right hand" can pass with the weapon tens of
+  degrees off. Measure the fit error each time the weapon reaches its socket, across every
+  recorded run.
+
 ## Melee
 
 Distinguish two implementations before proposing physical swings:
@@ -56,4 +77,6 @@ They need not share a binding, a hand or a recognizer.
 If the game has dodge, dash or similar actions, a button is a conservative default. A lean
 gesture can conflict with room-scale movement and comfort. Discover whether direction comes
 from movement, facing, a selected target or the game itself. Test each supported direction and
-view heading: the game's logic may assume a camera the mod replaced.
+view heading: the game's logic may assume a camera the mod replaced. Hold the button down too: an
+evasion button that also sprints when held can turn a mod-supplied direction into a run
+([input](input-into-the-game.md#shared-requirements)).
