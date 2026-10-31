@@ -47,6 +47,17 @@ Project scope: [user's chosen modes and relevant publisher guidance; see RESEARC
 - **Requested input isn't a game outcome.** Verify the game accepted/performed the action.
   Release/neutralise outgoing controls on context changes and focus/tracking loss, and prevent
   held inputs from becoming unrelated actions on return.
+- **Keep a vendor-neutral rendering baseline.** Frame tracking, stereo delivery and essential
+  diagnostics must work without an optional vendor SDK or upscaler. Separate required graphics
+  capabilities from tested GPU/driver/runtime combinations; missing hardware stays untested.
+  A flat fallback or a submission counter is not proof of stereo.
+- **Record broad workarounds when adding them.** In `STATUS.md`, register disabled optimisations,
+  forced refreshes, duplicated work, extra waits and widened bounds with their reason, scope,
+  A/B switch, scene costs and revisit criterion. Revisit them on new scene types and before release.
+- **Measure beyond the test room.** Rendering changes need both-eye correctness checks and
+  repeated, matched performance comparisons in representative real gameplay. Keep temporal
+  histories per eye and preserve visibility needed by either eye. Use the test-harness skill's
+  compatibility and performance references; unresolved measurements remain explicit release gaps.
 
 ## Commands
 

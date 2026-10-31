@@ -74,6 +74,13 @@ The user is responsible for checking what the game's publisher supports and perm
 modding, anti-cheat and online play, and choosing the project's scope. The research pass gathers
 dated sources and flags uncertainty; this kit doesn't impose a blanket offline-only rule.
 
+Rendering work has two required reviews in the harness:
+[GPU/AA compatibility and stereo correctness](skills/vr-mod-test-harness/references/rendering-compatibility.md),
+and [representative performance and broad workarounds](skills/vr-mod-test-harness/references/performance.md).
+The existing `STATUS.md` template holds their evidence matrix and workaround register; there are
+no extra setup files. The release skill checks the built package's effective defaults against
+that evidence. Missing hardware or measurements remain explicit gaps, not compatibility claims.
+
 **Status:** distilled from one complete mod build. Not yet tested from a clean checkout in both
 agents, so expect rough edges. The voice capture, interleave, frame check, trace query,
 expectation and eye flicker scripts have unit tests (`tests/test_kit.py`); the live microphone path

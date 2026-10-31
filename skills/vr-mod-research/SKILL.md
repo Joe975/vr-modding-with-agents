@@ -30,6 +30,13 @@ recommendation the human can argue with.
   RenderDoc fill the gaps the web doesn't.
 - Whether the engine already has a second camera or multi-view path (picture-in-picture, split
   screen, mirrors, scope rendering). This decides whether same-frame stereo is possible.
+- Available AA/upscaling paths, per-eye temporal state, visibility/culling and shadow caches.
+  Identify vendor SDK dependencies in frame IDs, capture and telemetry as well as image quality.
+  Plan a vendor-neutral baseline and the required graphics capabilities; separate feasibility
+  from tested hardware. Use the harness's
+  [rendering compatibility contract](../vr-mod-test-harness/references/rendering-compatibility.md).
+- Representative performance scenes and likely broad workarounds. Plan their A/B controls and
+  measurement before adopting them; a small test scene cannot qualify the real game's cost.
 
 ## 3. Discover gameplay and integration capabilities
 
@@ -82,6 +89,10 @@ Write `RESEARCH.md` with sources for every claim:
 5. Gameplay contexts, available integration/observation hooks, unknowns and feasible interaction
    scope. Include the evidence needed to distinguish a requested action from its game outcome.
 6. The first flat-screen experiment.
+7. Rendering baseline, capability requirements, GPU/AA/runtime evidence matrix and unsupported
+   setting behaviour. Mark untested combinations explicitly; don't promise every GPU brand from
+   a vendor-neutral API alone. Record the planned representative performance comparisons and
+   initialise the rendering sections of `STATUS.md`.
 
 Then fill in what you learnt in `AGENTS.md`'s brackets, add a `STATUS.md` entry, and ask the human
 which headset and input they care about if it's still unknown. Wait for them to agree the plan

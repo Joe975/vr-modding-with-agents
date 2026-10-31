@@ -75,13 +75,19 @@ Things an engine may compute per view but store or index in a way the second vie
 - **Per-view selection into a shared atlas.** Each view picks its own shadowed lights (by
   frustum, distance, occlusion), but all views render into one shadow atlas indexed by list
   position. When the lists disagree, a tile holds one light for one view and another for the
-  other, so lights and shadows flip for a frame. Fix pattern: make the second view use the first
-  view's selection.
+  other, so lights and shadows flip for a frame. Share a stable atlas selection only if it covers
+  both eyes. Copying the first view's selection is a diagnostic or a qualified fix, not a general
+  rule: it can omit lights or objects only the other eye needs. A capped union can also drop needed
+  entries. Keep per-eye lists where required and use a stable selection rule.
 - **Shared temporal history.** A history that should advance once per frame (volumetric fog,
   TAA-style accumulation, exposure) advances once per view, so each eye reprojects the other
-  eye's history. Give each view its own history, or advance it once per frame.
+  eye's history. Give view-dependent accumulation its own history per eye. Share genuinely
+  view-independent state only with an explicit once-per-frame update contract; skipping one update
+  is not a substitute for private TAA history.
 - Selection that waits on an earlier frame's occlusion query can also lag under fast motion, but
-  test it: forcing everything visible is a quick A/B.
+  test it: forcing everything visible is a quick A/B. Register the bypass and measure its real-scene
+  cost before keeping it. The full ownership and either-eye visibility checks are in
+  [rendering-compatibility.md](rendering-compatibility.md).
 
 ## Test a hypothesis without a rebuild
 

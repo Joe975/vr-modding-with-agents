@@ -1,0 +1,13 @@
+{
+  "description": "Example review expectations for a measured rendering summary. Fractional timing limits are configurable review triggers, not universal budgets. Aggregate matched repeated runs per scene; image_verified requires both-eye evidence. Required missing metrics keep this review incomplete. No game driver or telemetry collector is supplied by this fixture.",
+  "expect": [
+    {"metric": "stereo.image_verified", "equals": true, "why": "counters and flat fallback are not stereo proof"},
+    {"metric": "stereo.output_mode", "equals": "stereo"},
+    {"metric": "stereo.permanent_stops", "equals": 0},
+    {"metric": "temporal.history_failures", "equals": 0},
+    {"metric": "visibility.missing_visible_objects", "equals": 0},
+    {"metric": "required_metrics_missing.#", "equals": 0},
+    {"metric": "timing.median_change_fraction", "max": 0.05, "why": "example configurable review trigger"},
+    {"metric": "timing.p95_change_fraction", "max": 0.10, "why": "example configurable review trigger"}
+  ]
+}

@@ -397,6 +397,67 @@ class ScenarioExampleTests(unittest.TestCase):
             self.assertTrue(any(frame.get("buttons") or frame.get("axes") for frame in frames))
 
 
+class RenderingReviewTests(unittest.TestCase):
+    """Exercise the shipped acceptance contract; these are synthetic, not hardware results."""
+
+    CONTRACT = HARNESS.parent / "references" / "rendering-review.json"
+
+    def rules(self):
+        return json.loads(self.CONTRACT.read_text(encoding="utf-8"))["expect"]
+
+    def good(self):
+        return {
+            "stereo": {"image_verified": True, "output_mode": "stereo", "permanent_stops": 0,
+                       "submitted_pairs": 10000},
+            "temporal": {"history_failures": 0},
+            "visibility": {"missing_visible_objects": 0},
+            "required_metrics_missing": [],
+            "timing": {"median_change_fraction": 0.02, "p95_change_fraction": 0.04},
+        }
+
+    def test_observed_stereo_passes_without_optional_vendor_telemetry(self):
+        # An unavailable optional vendor utility does not prevent the baseline review.
+        metrics = self.good()
+        metrics["vendor_utility"] = None
+        self.assertTrue(all(ok for ok, _ in expect.check(self.rules(), metrics)))
+
+    def test_counters_cannot_hide_flat_output_or_rendering_faults(self):
+        for group, field, value in (
+            ("stereo", "image_verified", False),
+            ("stereo", "output_mode", "flat"),
+            ("stereo", "permanent_stops", 1),
+            ("temporal", "history_failures", 1),
+            ("visibility", "missing_visible_objects", 1),
+        ):
+            with self.subTest(group=group, field=field):
+                metrics = self.good()
+                metrics[group][field] = value
+                self.assertTrue(any(not ok for ok, _ in expect.check(self.rules(), metrics)))
+
+    def test_missing_required_evidence_cannot_pass_as_zero(self):
+        for value in (["gpu_frame_ms"], None):
+            metrics = self.good()
+            metrics["required_metrics_missing"] = value
+            self.assertTrue(any(not ok for ok, _ in expect.check(self.rules(), metrics)))
+        metrics = self.good()
+        metrics["timing"]["p95_change_fraction"] = None
+        self.assertTrue(any(not ok for ok, _ in expect.check(self.rules(), metrics)))
+        del metrics["timing"]
+        self.assertTrue(any(not ok for ok, _ in expect.check(self.rules(), metrics)))
+
+    def test_tail_regression_triggers_review_and_limits_are_configurable(self):
+        metrics = self.good()
+        metrics["timing"] = {"median_change_fraction": -0.1, "p95_change_fraction": 0.2}
+        self.assertTrue(any(not ok for ok, _ in expect.check(self.rules(), metrics)))
+        rules = self.rules()
+        for rule in rules:
+            if rule["metric"] == "timing.p95_change_fraction":
+                rule["max"] = 0.25
+        self.assertTrue(all(ok for ok, _ in expect.check(rules, metrics)))
+        metrics["stereo"]["image_verified"] = False
+        self.assertTrue(any(not ok for ok, _ in expect.check(rules, metrics)))
+
+
 class KitStructureTests(unittest.TestCase):
     def kit_files(self, suffixes=(".md", ".py", ".txt", ".json", ".cpp")):
         # Everything a user copies: the README, templates, skills and checklists (not these tests).

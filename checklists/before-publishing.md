@@ -28,5 +28,16 @@ the [vr-mod-release](../skills/vr-mod-release/SKILL.md) skill):
 - [ ] **Licences** of the VR framework cores you built on, with attribution, and a third-party
       notices file in the package for everything bundled (runtime loaders, an embedded interpreter).
 - [ ] **Issues on.** Open the repo with issues enabled so players can report problems and send fixes.
+- [ ] **Rendering compatibility.** Capability minimums and real GPU/AA/runtime evidence are
+      recorded separately; vendor middleware is optional for the baseline. Unsupported modes
+      have a visible fallback and recovery. Both-eye images verify stereo; untested hardware and
+      comfort gaps are explicit. See the release skill's rendering gates.
+- [ ] **Workarounds and performance.** Every broad workaround has a correctness reason, scope,
+      A/B control, representative scene costs and revisit criterion. Repeated matched runs cover
+      real gameplay, timing tails, fresh stereo delivery and pose age. Resolve regressions or
+      record the release decision and limitation; don't infer mission performance from a tiny room.
+- [ ] **Shipped defaults.** The hashed player package's effective profile matches the evidence,
+      including active workarounds and diagnostics off. Normal launch, settings changes and
+      recovery pass; unresolved gaps are listed rather than counted as success.
 
 **This is not legal advice.**

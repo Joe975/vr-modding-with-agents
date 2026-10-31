@@ -103,6 +103,22 @@ line and a fix, one button whose label says what it will do, and nothing of the 
 
 ## Before the first public release
 
+Apply these rendering gates on every release that changes rendering, performance, compatibility
+or defaults, as well as the first release:
+
+- Complete the harness's [compatibility checks](../vr-mod-test-harness/references/rendering-compatibility.md)
+  for the advertised GPU/AA/runtime combinations. Report actual hardware and human headset tests
+  separately from simulated missing-SDK tests. Restrict support claims to the evidence; list
+  experimental/untested gaps and unsupported-setting fallbacks plainly.
+- Review every `STATUS.md` workaround against the harness's
+  [performance procedure](../vr-mod-test-harness/references/performance.md). Unknown scene costs or
+  unresolved regressions require an explicit release decision and limitation, never a silent pass.
+- Audit the built package's effective defaults against the tested profile: active hooks, disabled
+  engine optimisations, forced work, AA and actual resolutions, buffer limits, trace and overlays.
+  Record the package hash and active workaround IDs. Repeat representative tests from its normal
+  player launch with debug costs off, including settings changes and load/recovery. A dev-only
+  switch or faster flat fallback cannot qualify the shipped stereo configuration.
+
 - A playtest from the built package, not the dev scripts: install, play, quit, mod files gone.
 - Someone other than the author installs from the zip with only the README.
 - Every feature that is on by default has been played in the headset. Default off anything that

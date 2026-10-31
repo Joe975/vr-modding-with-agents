@@ -1,6 +1,6 @@
 ---
 name: vr-mod-test-harness
-description: Build and use a VR mod test harness with eye-image checks, both-eye headset recording, per-eye flicker measurement, scripted inputs/poses, capability-specific gameplay observations and short verdicts. Use when setting up launch/test tooling, reproducing control or rendering issues (including flicker or lighting that differs between the eyes), or checking what can be verified without a human in the headset.
+description: Build and use a VR mod test harness with eye-image checks, scripted inputs, gameplay observations and short verdicts. Use for rendering and GPU/AA compatibility, stereo visibility/history, performance comparisons and workaround reviews, or reproducing control issues without a human in the headset.
 ---
 
 # VR mod test harness
@@ -126,6 +126,14 @@ column nobody asserted.
   isolates costs (tracking only / copy only / full submit). Reject captures taken in menus, pause
   or cutscenes. Per-frame costs hiding in setup code (like re-validating the graphics adapter
   every frame) show up here long before anyone notices them in play.
+
+**Rendering changes require two gates.** Read
+[rendering-compatibility.md](references/rendering-compatibility.md) when adding or changing an
+AA path, frame tracking, eye resources, visibility or supported hardware. Read
+[performance.md](references/performance.md) when changing rendering costs, adding a broad
+workaround, entering a new scene type or preparing a release. Record both-eye correctness,
+representative repeated comparisons and remaining evidence gaps in `STATUS.md`. A fast flat
+fallback does not pass either gate as stereo.
 
 ## Stereo side effects
 

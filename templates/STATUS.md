@@ -16,6 +16,33 @@ session (or the other agent) picks up the work.
 - Launch for testing: [command]
 - Who owns the game install right now: [nobody / session, run folder, deadline]
 
+## Rendering compatibility
+
+- Minimum capabilities: [graphics API/features, formats/resource operations, runtime and memory
+  requirements; confirmed versus unknown; vendor-neutral AA/stereo baseline]
+- Evidence matrix: [GPU model/driver, OS/runtime/headset, game/mod build, AA, actual input/output
+  size, scenes, run IDs, image checks, recovery, performance and human comfort verdict]
+- Claims: [tested / experimental / untested / unsupported per combination; missing vendor
+  middleware test is separate from real hardware validation]
+- Unsupported settings: [visible fallback/reason and how supported stereo resumes]
+
+## Rendering workarounds
+
+One entry per broad workaround; link longer evidence rather than copying logs here.
+
+- [ ] [ID / introduced commit: optimisation disabled or work forced; correctness reproduction;
+  exact scope and activation log; A/B switch; costs by representative scene (unknown stays
+  unknown); narrower replacement or removal criterion; revisit on new scene types and release]
+
+## Performance and release evidence
+
+- Baselines and budgets: [fixed checkpoints/routes, matched settings and builds, repeated A/B
+  runs, timing/throughput/tail/pose-age budgets and configurable regression review triggers]
+- Results: [small scene plus applicable dense interior, terrain and busiest gameplay; CPU/GPU
+  times, fresh delivered stereo, gaps/drops and pose age; missing metrics and profiler overhead]
+- Package audit: [package hash, effective defaults/settings, active workaround IDs, diagnostics
+  off, normal-launch and settings/load recovery checks; evidence and untested gaps]
+
 ## Waiting on the human
 
 - [ ] [Headset checks that need a person: what to launch, what to do, what to look for]

@@ -35,6 +35,10 @@ Add only groups used by the chosen interactions and checks:
 - Combat: aim ray, weapon transforms, attack acceptance and hit outcomes if observable.
 - Objects/UI: selected target, interaction state, tool state, puzzle value or command result.
 - Vehicles: steering/throttle received by the game, vehicle transform/speed and cockpit anchor.
+- Rendering checks: frame/job and eye identity, AA mode, effective dimensions, history generation
+  and resets, visibility/workaround mode, delivery and pose timing. Collect high-rate performance
+  events separately if needed; a fixed-rate gameplay trace cannot measure every frame's tail.
+  Use the [compatibility](rendering-compatibility.md) and [performance](performance.md) contracts.
 
 These are example groups, not required field names. Keep advertised fields stable; use `null`
 for a missing observation rather than zero. Omit inapplicable groups and declare that in the
