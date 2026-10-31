@@ -16,9 +16,13 @@ Build it before the first playtest that's about feel.
 - **Common envelope:** `t` in seconds from run start and `type` (`header`, `sample`, `event`).
 - **Context:** gameplay mode, focus/tracking validity and camera mode, as available.
 - **Input and intent:** controller states/poses used by the mod and the named actions recognized,
-  including digital edges, analog values, targets and rejection reasons.
+  including digital edges, analog values, targets and rejection reasons. Record every physical
+  control, including ones that do nothing in this context: "I tried everything" can only be
+  checked if the trace saw it.
 - **Integration output:** what the mod emitted, with route and context (key/mouse, pad, engine
-  action, target or pose update). A pad state is only required for a pad integration.
+  action, target or pose update). A pad state is only required for a pad integration. Write it from
+  every branch of the input path, menus included, marked with the context. A branch that writes
+  nothing leaves the trace frozen on the last gameplay value, which reads like evidence.
 - **Observed result:** what the game actually read or did, where measurable. Keep this separate
   from intent: attack accepted, selected object, puzzle state, vehicle response, or another outcome.
 
@@ -37,6 +41,11 @@ for a missing observation rather than zero. Omit inapplicable groups and declare
 header. Games without skeletal hooks don't need fake bones, IK or weapon metrics.
 JSON lines repeat every key on every row, so a trace grows to megabytes a minute. That's fine on
 disk; never read it raw. Agents query it with `scripts/trace_query.py`.
+
+Two blind spots to allow for. A fixed-rate trace measures a press up to one sample too long (33 ms
+at 30 Hz), which matters when setting a threshold from it. And character telemetry usually stops
+the moment its data fails validation, just when you want to see it, so log the whole refused value
+once per new refusal.
 
 ## Events
 

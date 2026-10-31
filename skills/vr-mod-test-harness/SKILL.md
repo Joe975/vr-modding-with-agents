@@ -84,6 +84,23 @@ for one complaint is shown not to break earlier ones (intentional swings counted
 motions counted stay at zero). It needs the recognizer built as a library the replay tool can
 link, and traces carrying every input the recognizer reads.
 
+The same works for any rule that decides from recorded inputs: camera holds, held-item state,
+pause timing. Prove the replay first: with the new rule off, it should reproduce what the run
+logged. Then count the rule over every recorded run, and cut the frames around the complaint into
+a small fixture for a regression test.
+
+**The test scene is not the real game.** A direct test launch can use a different character, level
+or asset set from a normal launch, so a check can pass there while the feature does nothing for
+players. Have each feature log what it changed (parts written, not just "ran"), make every refusal
+name the field that failed, and have the run report flag a feature that ran with zero effect on a
+normal launch. Two mechanisms for one job hide this: while one half works, nobody notices the
+other never applied.
+
+**Check the outcome, not the label.** A check that reads a state ("held in the right hand") passes
+while the result is wrong (the weapon tens of degrees off). Assert what the player would see. When
+a fault turns up, reread the numbers in the last passing checks: it's often already there, in a
+column nobody asserted.
+
 ## Measure and record
 
 - **Trace**: a fixed-rate JSON-lines log of the player, the game's view of the player, and every

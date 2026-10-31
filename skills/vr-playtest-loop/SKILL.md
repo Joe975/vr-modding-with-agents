@@ -56,6 +56,10 @@ interaction request and the unchanged puzzle state. Record the active context (o
 menu, etc.) so the same binding's different uses aren't confused. Expect transcription errors
 and off-topic chatter; the timestamps matter more than the words.
 
+Start each session's note with a table: time, what the human said, what the run shows at that
+moment. Complaints seconds apart need not share a cause, so keep them apart until the run says
+otherwise.
+
 ## Turning notes into work
 
 For each note: reproduce it without the human (a test driver script, eye snapshots, the trace),
@@ -63,6 +67,19 @@ show it failing, fix it, and show it passing. Record each one in `STATUS.md`.
 
 If an issue can't be reproduced, either the harness has a gap to fix, or the note needs a better
 description from the human. Say which, and what you'd need.
+
+- **Label what's proven.** Mark each finding proven (a log, trace or test shows it), inferred, or
+  unknown. A later reader will otherwise build on a guess.
+- **Don't close a report as "by design" from reading the design.** If the human reports something
+  the rules say is intended, prove from the run which state the game was really in. The rule may
+  be right and the mod's idea of the state wrong.
+- **A repeat report the trace can't explain means the trace has a gap.** Fix the gap in the same
+  pass, even if the bug stays open, so the next occurrence is evidence. Don't set a threshold from
+  an event the trace never measured.
+- **Give every fix not proven in the game a live check:** what to do, and which log line or value
+  should show it worked. Keep "built, not played" visible in `STATUS.md` until the human has tried it.
+- **Where a fix changes the feel, offer options with their costs** and let the human pick. Note the
+  choice beside the evidence, so a later fix doesn't quietly reverse it.
 
 ## Splitting the work
 
@@ -81,6 +98,9 @@ or unrelated change. Keep the coordinating session small:
 - **One run at a time.** Worktrees are separate, but the game install, the runtime and the headset
   are shared. The orchestrator queues runs (or workers take a lock file) and every run removes
   the mod afterwards.
+- **After a playtest, work from the evidence first.** A session's complaints can go to parallel
+  workers using only its logs, trace and code, with none launching the game. Merge them, run every
+  test on the merged build, then do the live checks one at a time.
 
 When a worker's report doesn't settle it, the orchestrator asks that worker a follow-up question
 rather than reading the evidence itself.
@@ -110,6 +130,11 @@ Families that recur in VR mods:
   is what would resolve the state (a draw that would tell you which weapon is held; a trigger that
   never fires for an unrecognised weapon). One rule: refuse a brief unknown, then act on the best
   default after a grace period (2 s is a start).
+- **Checks tighter than the game's data.** A strict validity check can refuse harmless data during
+  a rare animation. A world matrix that must be rigid to 1e-4 fails on a tiny uniform scale, and
+  stereo stands down for seconds. Accept the harmless shape (equal-length axes at right angles,
+  scale 0.8-1.25), divide it out, keep refusing the rest (shear, mirrors) and count how often each
+  case fires.
 - **Tables keyed by per-level game objects.** They fill after enough level loads and then refuse
   the player's own objects. Evict the least recently seen row once it's stale; never evict live
   rows.
