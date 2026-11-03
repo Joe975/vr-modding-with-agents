@@ -22,7 +22,8 @@ image's mean, which would drop a frame where one cell blips while the view is st
 local clock as <prefix>.times (for example grepped from the mod's log). --same-pose reports the
 difference between the eyes after the best horizontal shift, for a run where both eyes render the
 same pose. --max-one-eye prints a PASS/FAIL line and exits 1 when either eye's one-eye rate (per
-100 game frames) is above it. Thresholds are starting defaults.
+100 game frames) is above it. An ERROR line and exit code 2 mean it couldn't measure (missing
+stream files, no frames in the --from/--to window). Thresholds are starting defaults.
 """
 from __future__ import annotations
 
@@ -229,6 +230,14 @@ def main(argv=None):
     p.add_argument("--same-pose", action="store_true", help="report the eyes' difference after the best horizontal shift")
     p.add_argument("--max-one-eye", type=float, help="FAIL above this many one-eye blips per 100 game frames in either eye")
     a = p.parse_args(argv)
+    try:
+        return run(a)
+    except Exception as error:  # a crash is not a FAIL: nothing was measured
+        print(f"ERROR {type(error).__name__}: {error}")
+        return 2
+
+
+def run(a):
     left, right, times, info = load_stream(a.prefix)
     sel = np.ones(len(times), bool)
     if a.start:
@@ -237,8 +246,8 @@ def main(argv=None):
         sel &= times <= clock_seconds(a.end)
     left, right, times = left[sel], right[sel], times[sel]
     if len(times) < 3:
-        print("too few frames in the window")
-        return 1
+        print("ERROR too few frames in the window: check --from/--to against the stream's clock times")
+        return 2
     print(f"stream: {len(times)} frames, {times[-1] - times[0]:.1f} s, {info['eye_width']}x{info['height']} per eye "
           f"(downscale {info.get('downscale', '?')}), {clock_text(times[0])}-{clock_text(times[-1])}")
     marks = read_marks(a.marks.read_text(encoding="utf-8", errors="replace").splitlines()) if a.marks else []

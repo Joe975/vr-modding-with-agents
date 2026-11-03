@@ -8,6 +8,10 @@ Each line of the trace is one JSON object with a time field `t` (seconds) and a 
 ("header", "sample", "event"); events name themselves in `event`. Fields are dotted paths into
 the object (`metrics.head_offset_metres`, `input.left.pos.1`). Output is tab-separated with one
 header row: missing values print as `-`, floats to 3 decimals, lists comma-joined.
+
+Exit code 0 with rows (or none, if the filters matched nothing). An ERROR line and exit code 2
+mean the query couldn't run: an unreadable trace, or an --around/--event name the trace never
+records (the line lists the event names it does have).
 """
 import argparse
 import json
@@ -50,16 +54,26 @@ def read(lines):
                 continue
 
 
+class NoSuchEvent(ValueError):
+    def __init__(self, name, records):
+        known = sorted({str(r["event"]) for r in records if r.get("event") is not None})
+        super().__init__(f"no event named {name!r} in this trace; it has: {', '.join(known) or 'no events'}")
+
+
 def windows(records, around, width):
     try:
         centres = [float(around)]
     except ValueError:
         centres = [r.get("t", 0.0) for r in records if r.get("event") == around]
+        if not centres:
+            raise NoSuchEvent(around, records)
     return [(c - width, c + width) for c in centres]
 
 
 def query(records, type_=None, event=None, around=None, width=1.0, start=None, end=None, every=1):
     records = list(records)
+    if event and not any(r.get("event") == event for r in records):
+        raise NoSuchEvent(event, records)
     spans = windows(records, around, width) if around is not None else None
     picked = []
     for r in records:
@@ -125,12 +139,16 @@ def main(argv=None):
     parser.add_argument("--every", type=int, default=1, help="keep every Nth sample")
     parser.add_argument("--limit", type=int, default=50)
     args = parser.parse_args(argv)
-    with open(args.trace, encoding="utf-8") as handle:
-        records = read(handle)
-        if args.count:
-            print(counts(records))
-            return 0
-        rows = query(records, args.type_, args.event, args.around, args.window, args.start, args.end, max(1, args.every))
+    try:
+        with open(args.trace, encoding="utf-8") as handle:
+            records = read(handle)
+            if args.count:
+                print(counts(records))
+                return 0
+            rows = query(records, args.type_, args.event, args.around, args.window, args.start, args.end, max(1, args.every))
+    except Exception as error:  # a failed query is not an empty result
+        print(f"ERROR {type(error).__name__}: {error}")
+        return 2
     fields = args.fields.split(",") if args.fields else default_fields(rows)
     print(format_rows(rows, fields, args.limit))
     return 0

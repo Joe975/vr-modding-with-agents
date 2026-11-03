@@ -21,6 +21,8 @@ should print a verdict first, and you only open the evidence when the verdict is
 - Flicker: `scripts/eye_flicker.py` on a both-eye recording, never the video itself.
 - When an orchestrating agent hands a check to a worker or sub-agent, ask for the verdict lines
   and file paths back, not the evidence.
+- Exit codes: 0 PASS, 1 FAIL, 2 no result (an ERROR line, or frame_check's INCONCLUSIVE). Treat 2
+  as "not checked", never as a pass or a fail.
 
 Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the repo's venv.
 
@@ -44,10 +46,14 @@ Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the re
   It checks each eye isn't blank, doesn't match a known-bad screen (save one capture of the
   runtime's Waiting or loading screen as `--reject`), matches a golden capture taken at the same
   scripted pose (`--ref`), and that the eyes are a real stereo pair: not identical copies (mono),
-  the same scene once the left/right offset is undone, and no vertical offset between them. One
-  PASS/FAIL line per check, exit code 1 on failure, previews only on failure. Thresholds are
-  starting defaults; calibrate them on a few known-good and known-bad captures of your own.
-  Golden images only work for captures at a fixed scripted pose in a fixed scene.
+  the same scene once the left/right offset is undone, no vertical offset between them, and more
+  than one depth (a whole frame at one disparity is a flat picture, like a 2D panel). One
+  PASS/FAIL line per check, then the verdict: PASS (exit 0), FAIL (1), or INCONCLUSIVE (2) when
+  nothing failed but it was given one image, or neither `--reject` nor `--ref`. Treat
+  INCONCLUSIVE as not confirmed. ERROR (2) means it couldn't run. Previews are written on FAIL
+  and INCONCLUSIVE. Thresholds are starting defaults; calibrate them on a few known-good and
+  known-bad captures of your own. Golden images only work for captures at a fixed scripted pose
+  in a fixed scene.
 - **A fallback can pass a frame check.** If the mod falls back to a flat panel or mono view when
   stereo stops, "frames submitted" keeps climbing. Run checkers should require the primary path
   (real stereo pairs from the stereo producer) and fail on any stop or fallback line. Prove each

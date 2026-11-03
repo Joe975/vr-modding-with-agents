@@ -8,10 +8,18 @@ Checks, cheapest first:
   reject  no image looks like a known-bad reference (the runtime's waiting screen, a loading screen)
   ref     the left image looks like a golden capture taken at the same scripted pose
   stereo  the two eyes show the same scene, are not identical copies, and line up vertically
+  depth   parts of the scene sit at different disparities; one disparity across the whole frame
+          is a flat picture (a 2D panel, a mono image shown at one depth), not a rendered scene
 
-Exit code 0 when everything passes, 1 otherwise. On a failure it writes `<image>.preview.png`
-beside each image, downscaled to --max-side (720 px by default), for the agent to look at. The
-thresholds are starting defaults: calibrate them on your own captures.
+The last line is the verdict, with its exit code:
+  0  VERDICT PASS          every check passed, and there was enough to judge
+  1  VERDICT FAIL          a check failed
+  2  VERDICT INCONCLUSIVE  nothing failed, but one image can't show stereo, and without --reject or
+                           --ref nothing tells the game's view from another screen
+  2  ERROR                 the script couldn't run (unreadable image, bad arguments)
+On FAIL or INCONCLUSIVE it writes `<image>.preview.png` beside each image, downscaled to
+--max-side (720 px by default), for the agent to look at. The thresholds are starting defaults:
+calibrate them on your own captures.
 """
 import argparse
 import sys
@@ -89,8 +97,44 @@ def stereo(left, right):
     }
 
 
+def disparities(left, right, grid=(3, 4), reach=0.15, min_contrast=0.02, min_match=0.6):
+    """Horizontal disparity of each textured tile of the left eye, in working-size pixels, found
+    by sliding the tile along the same rows of the right eye. Tiles that match nowhere are left out."""
+    shape = working_shape(left)
+    l, r = fit(left, shape), fit(right, shape)
+    h, w = shape
+    th, tw, most = h // grid[0], w // grid[1], int(w * reach)
+    found = []
+    for y in range(0, th * grid[0], th):
+        for x in range(0, tw * grid[1], tw):
+            tile = l[y:y + th, x:x + tw]
+            if tile.std() < min_contrast:
+                continue
+            tile = (tile - tile.mean()) / tile.std()
+            best, best_dx = min_match, None
+            for dx in range(-most, most + 1):  # left[x] is right[x - dx], as in shift()
+                if 0 <= x - dx and x - dx + tw <= w:
+                    other = r[y:y + th, x - dx:x - dx + tw]
+                    if other.std() > 1e-6:
+                        score = float((tile * (other - other.mean())).mean() / other.std())
+                        if score > best:
+                            best, best_dx = score, dx
+            if best_dx is not None:
+                found.append(best_dx)
+    return found
+
+
+def depth(found, min_px=2):
+    """How many tiles sit at least min_px away from the most common disparity."""
+    if not found:
+        return 0
+    values, counts = np.unique(found, return_counts=True)
+    mode = values[np.argmax(counts)]
+    return int(sum(abs(d - mode) >= min_px for d in found))
+
+
 def run_checks(images, ref=None, reject=(), min_contrast=0.02, min_ref=0.6, max_reject=0.85,
-               min_corr=0.4, max_dy=0.02):
+               min_corr=0.4, max_dy=0.02, min_depth_tiles=2):
     """images: {name: gray array}, first is the left eye. Returns [(ok, line)]."""
     results = []
     for name, gray in images.items():
@@ -110,7 +154,28 @@ def run_checks(images, ref=None, reject=(), min_contrast=0.02, min_ref=0.6, max_
         results.append((st["corr"] >= min_corr, f"stereo  correlation {st['corr']:.2f} (min {min_corr})"))
         results.append((abs(st["dy"]) <= max_dy,
                         f"stereo  shift dx {st['dx']:+.3f} dy {st['dy']:+.3f} of frame (|dy| max {max_dy})"))
+        found = disparities(left, right)
+        off = depth(found)
+        results.append((off >= min_depth_tiles,
+                        f"depth   {off} of {len(found)} matched tiles at another disparity "
+                        f"(min {min_depth_tiles}; 0 means one flat picture)"))
     return results
+
+
+def verdict(results, images, ref=None, reject=()):
+    """('PASS' | 'FAIL' | 'INCONCLUSIVE', reason)."""
+    failed = sum(not ok for ok, _ in results)
+    if failed:
+        return "FAIL", f"{failed} of {len(results)} checks"
+    missing = []
+    if len(images) < 2:
+        missing.append("one image can't show stereo: give both eyes")
+    if ref is None and not reject:
+        missing.append("nothing tells the game's view from another screen: add --reject <the runtime's "
+                       "waiting screen> or --ref <golden capture>")
+    if missing:
+        return "INCONCLUSIVE", f"{len(results)} checks passed, but " + "; ".join(missing)
+    return "PASS", f"{len(results)} checks"
 
 
 def write_preview(path, max_side):
@@ -133,26 +198,31 @@ def main(argv=None):
     parser.add_argument("--max-reject", type=float, default=0.85)
     parser.add_argument("--min-corr", type=float, default=0.4)
     parser.add_argument("--max-dy", type=float, default=0.02)
+    parser.add_argument("--min-depth-tiles", type=int, default=2)
     args = parser.parse_args(argv)
     if len(args.images) > 2:
         parser.error("give one or two images")
-    labels = ["left", "right"] if len(args.images) == 2 else ["image"]
-    images = {f"{label} {p.name}": load_gray(p) for label, p in zip(labels, args.images)}
-    results = run_checks(
-        images,
-        ref=(args.ref.name, load_gray(args.ref)) if args.ref else None,
-        reject=[(p.name, load_gray(p)) for p in args.reject],
-        min_contrast=args.min_contrast, min_ref=args.min_ref, max_reject=args.max_reject,
-        min_corr=args.min_corr, max_dy=args.max_dy)
-    failed = sum(not ok for ok, _ in results)
-    for ok, line in results:
-        print(("PASS " if ok else "FAIL ") + line)
-    if failed:
+    try:
+        labels = ["left", "right"] if len(args.images) == 2 else ["image"]
+        images = {f"{label} {p.name}": load_gray(p) for label, p in zip(labels, args.images)}
+        ref = (args.ref.name, load_gray(args.ref)) if args.ref else None
+        reject = [(p.name, load_gray(p)) for p in args.reject]
+        results = run_checks(
+            images, ref=ref, reject=reject,
+            min_contrast=args.min_contrast, min_ref=args.min_ref, max_reject=args.max_reject,
+            min_corr=args.min_corr, max_dy=args.max_dy, min_depth_tiles=args.min_depth_tiles)
+        for ok, line in results:
+            print(("PASS " if ok else "FAIL ") + line)
+        word, reason = verdict(results, images, ref, reject)
+        if word == "PASS":
+            print(f"VERDICT PASS ({reason})")
+            return 0
         previews = [write_preview(p, args.max_side) for p in args.images]
-        print(f"VERDICT FAIL ({failed} of {len(results)} checks). Previews: " + ", ".join(str(p) for p in previews))
-        return 1
-    print(f"VERDICT PASS ({len(results)} checks)")
-    return 0
+        print(f"VERDICT {word} ({reason}). Previews: " + ", ".join(str(p) for p in previews))
+        return 1 if word == "FAIL" else 2
+    except Exception as error:  # a crash is not a FAIL: nothing was judged
+        print(f"ERROR {type(error).__name__}: {error}")
+        return 2
 
 
 if __name__ == "__main__":

@@ -6,7 +6,8 @@ Build it before the first playtest that's about feel.
 
 ## Header
 
-- Wall-clock start time (with timezone), so it lines up with voice notes.
+- Wall-clock start time as `"start": "<ISO 8601 with timezone>"`, so it lines up with voice notes.
+  Every `t` is relative to it; without it `interleave.py` can't place the trace.
 - Mod version/commit, settings in force, sample rate.
 - Supported input/output routes and telemetry groups, including coordinate frames and units.
   State which observations are available; don't infer successful gameplay from requested input.

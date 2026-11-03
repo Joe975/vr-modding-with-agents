@@ -45,7 +45,9 @@ python .agents/skills/vr-playtest-loop/scripts/voice_capture.py --device "[mic n
 ## Lining it up with the game
 
 `scripts/interleave.py` merges the transcript with the mod's log or trace by time, and attaches
-the game events before each note:
+the game events before each note. A trace's times are relative to its run, so its header needs
+the wall-clock `start` (see the trace reference in the test-harness skill); the script stops
+with an error rather than guess. It exits 1 when the transcript has no notes.
 
 ```
 python .agents/skills/vr-playtest-loop/scripts/interleave.py [session]/transcript.md [mod log] --context 15 > timeline.md

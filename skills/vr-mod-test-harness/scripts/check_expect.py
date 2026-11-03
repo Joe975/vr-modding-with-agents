@@ -13,7 +13,8 @@ the trace:
 
 `metric` is a dotted path into the metrics JSON the mod writes for the run (list items by index,
 e.g. `dodge_windows.0.right_metres`); `count` of a list is `path.#`. Each expectation needs at
-least one of `min`, `max`, `equals`. Exit code 0 when all pass, 1 otherwise.
+least one of `min`, `max`, `equals`. Exit code 0 when all pass, 1 when any fails, 2 with an ERROR
+line when the run couldn't be judged (missing or malformed files, an expectation with no bound).
 """
 import json
 import sys
@@ -60,14 +61,18 @@ def main(argv=None):
     if len(argv) != 2:
         print(__doc__)
         return 2
-    with open(argv[0], encoding="utf-8") as handle:
-        expect = json.load(handle).get("expect", [])
-    with open(argv[1], encoding="utf-8") as handle:
-        metrics = json.load(handle)
-    if not expect:
-        print("FAIL scenario has no expect list: add one so the run can be judged without the trace")
-        return 1
-    results = check(expect, metrics)
+    try:
+        with open(argv[0], encoding="utf-8") as handle:
+            expect = json.load(handle).get("expect", [])
+        with open(argv[1], encoding="utf-8") as handle:
+            metrics = json.load(handle)
+        if not expect:
+            print("FAIL scenario has no expect list: add one so the run can be judged without the trace")
+            return 1
+        results = check(expect, metrics)
+    except Exception as error:  # a crash is not a FAIL: the run was never judged
+        print(f"ERROR {type(error).__name__}: {error}")
+        return 2
     for ok, line in results:
         print(("PASS " if ok else "FAIL ") + line)
     failed = sum(not ok for ok, _ in results)

@@ -17,7 +17,8 @@ Project scope: [user's chosen modes and relevant publisher guidance; see RESEARC
   VR View (or the mod's own eye snapshots), drive the controllers with the test driver, and read
   the trace and logs. Ask for the headset only for feel and comfort.
 - **Look, don't count.** A submission counter going up isn't proof an image reached the headset.
-  Confirm with an image check (`frame_check.py` in the test-harness skill).
+  Check both eyes with `frame_check.py` (test-harness skill) and a known-bad `--reject` or golden
+  `--ref`; only VERDICT PASS confirms. INCONCLUSIVE means it couldn't tell, not that it worked.
 - **Verdicts before evidence.** Every image and log you read is re-sent with every later request.
   Read check verdicts and summaries first; open an image (the failure preview) or query the
   trace only when a check fails. Hand checks and per-issue work to fresh sub-agents or worktree

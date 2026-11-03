@@ -112,6 +112,46 @@ class InterleaveTests(unittest.TestCase):
         out = inter.interleave(inter.parse_notes(TRANSCRIPT), log, context=15)
         self.assertIn("focus lost", out.split("## 14:21:00")[0])
 
+    def test_trace_events_are_placed_by_the_header_start(self):
+        # `t` is seconds from the run's start, so it only lines up through the header's wall clock.
+        trace = [json.dumps(r) for r in (
+            {"t": 0.0, "type": "header", "start": "2026-10-18T14:19:00.000+13:00", "hz": 30},
+            {"t": 5.0, "type": "sample", "metrics": {"x": 1}},
+            {"t": 9.25, "type": "event", "event": "parry", "detail": "rejected: too slow"},
+            {"t": 115.0, "type": "event", "event": "focus_lost"},
+        )]
+        lines = inter.trace_lines(trace)
+        self.assertEqual(lines[1], '2026-10-18T14:19:09.250+13:00 [trace t=9.250] parry {"detail": "rejected: too slow"}')
+        self.assertEqual(len(lines), 3)  # samples are left out
+        out = inter.interleave(inter.parse_notes(TRANSCRIPT), lines, context=15)
+        first, second = out.split("## 14:21:00")
+        self.assertIn("parry", first)
+        self.assertIn("focus_lost", second)
+        self.assertIsNone(inter.trace_lines(["14:19:09 plain log line"]))
+        with self.assertRaisesRegex(ValueError, "wall-clock start"):
+            inter.trace_lines([json.dumps({"t": 0.0, "type": "header"})])
+
+    def test_cli_writes_utf8_on_a_legacy_console_and_fails_without_notes(self):
+        import sys
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            transcript, log, empty = Path(tmp) / "t.md", Path(tmp) / "game.log", Path(tmp) / "empty.md"
+            transcript.write_text(TRANSCRIPT.replace("Shadows", "Shadows → flicker"), encoding="utf-8")
+            log.write_text("14:20:55 renderer: ≈ 3 ms\n", encoding="utf-8")
+            empty.write_text("# nothing said\n", encoding="utf-8")
+            raw = io.BytesIO()
+            legacy = io.TextIOWrapper(raw, encoding="cp1252")  # what `> timeline.md` gets on Windows
+            saved, sys.stdout = sys.stdout, legacy
+            try:
+                self.assertEqual(inter.main([str(transcript), str(log)]), 0)
+                sys.stdout.flush()
+            finally:
+                sys.stdout = saved
+            self.assertIn("→ flicker", raw.getvalue().decode("utf-8"))
+            with contextlib.redirect_stderr(io.StringIO()) as err, contextlib.redirect_stdout(io.StringIO()):
+                self.assertEqual(inter.main([str(empty), str(log)]), 1)
+            self.assertIn("No notes found", err.getvalue())
+
 
 def scene(seed, shape=(240, 360)):
     # Smooth random "scene": low-res noise blown up and blurred a little.
@@ -119,6 +159,15 @@ def scene(seed, shape=(240, 360)):
     coarse = rng.random((shape[0] // 12 + 2, shape[1] // 12 + 2))
     img = np.kron(coarse, np.ones((12, 12)))[: shape[0], : shape[1]]
     return (img + np.roll(img, 3, 0) + np.roll(img, 3, 1) + np.roll(img, (3, 3), (0, 1))) / 4
+
+
+def depth_pair():
+    """Two eyes of a scene with depth: the background at one disparity, a nearer block at another."""
+    wide, near = scene(7, (240, 400)), scene(13, (240, 400))
+    left, right = wide[:, 10:370].copy(), wide[:, 2:362].copy()  # background: left[x] == right[x + 8]
+    left[80:200, 120:240] = near[80:200, 120:240]
+    right[80:200, 134:254] = near[80:200, 120:240]  # nearer: left[x] == right[x + 14]
+    return left, right
 
 
 def verdict(results):
@@ -151,9 +200,30 @@ class FrameCheckTests(unittest.TestCase):
         self.assertEqual((dx, dy), (-6, 0))
 
     def test_stereo_pair_with_disparity_passes(self):
-        wide = scene(7, (240, 400))
-        results = frames.run_checks({"left": wide[:, 10:370], "right": wide[:, 2:362]})
+        left, right = depth_pair()
+        results = frames.run_checks({"left": left, "right": right})
         self.assertTrue(all(ok for ok, _ in results), results)
+
+    def test_one_disparity_across_the_frame_is_a_flat_picture(self):
+        # A 2D panel (a waiting screen, a mono image at one depth) shifts as a whole: it correlates
+        # well and lines up, so only the depth check catches it.
+        wide = scene(7, (240, 400))
+        results = verdict(frames.run_checks({"left": wide[:, 10:370], "right": wide[:, 2:362]}))
+        self.assertTrue(results["stereo-correlation"] and results["stereo-shift"])
+        self.assertFalse(results["depth"])
+
+    def test_passing_checks_without_enough_evidence_are_inconclusive(self):
+        left, right = depth_pair()
+        two = {"left": left, "right": right}
+        ok = frames.run_checks(two)
+        self.assertEqual(frames.verdict(ok, two)[0], "INCONCLUSIVE")
+        self.assertEqual(frames.verdict(ok, two, reject=[("waiting", scene(2))])[0], "PASS")
+        self.assertEqual(frames.verdict(ok, two, ref=("golden", left))[0], "PASS")
+        one = {"left": left}
+        word, reason = frames.verdict(frames.run_checks(one, reject=[("waiting", scene(2))]), one,
+                                      reject=[("waiting", scene(2))])
+        self.assertEqual(word, "INCONCLUSIVE")
+        self.assertIn("both eyes", reason)
 
     def test_stereo_catches_mono_copy_wrong_scene_and_vertical_offset(self):
         tall = scene(8, (300, 360))
@@ -171,14 +241,27 @@ class FrameCheckTests(unittest.TestCase):
             self.skipTest("Pillow not installed")
         import tempfile
         with tempfile.TemporaryDirectory() as tmp:
-            good, flat = Path(tmp) / "good.png", Path(tmp) / "flat.png"
-            Image.fromarray((scene(10) * 255).astype(np.uint8)).save(good)
-            Image.fromarray(np.zeros((900, 1600), np.uint8)).save(flat)
-            with contextlib.redirect_stdout(io.StringIO()):
-                self.assertEqual(frames.main([str(good)]), 0)
-                self.assertEqual(frames.main([str(flat), "--max-side", "400"]), 1)
-            self.assertFalse(good.with_suffix(".preview.png").exists())
-            with Image.open(flat.with_suffix(".preview.png")) as preview:
+            def save(name, gray):
+                path = Path(tmp) / name
+                Image.fromarray((gray * 255).astype(np.uint8)).save(path)
+                return str(path)
+            left, right = depth_pair()
+            left, right, waiting = save("left.png", left), save("right.png", right), save("waiting.png", scene(2))
+            flat = save("flat.png", np.zeros((900, 1600)))
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(frames.main([left, right, "--reject", waiting]), 0)
+                self.assertFalse(Path(left).with_suffix(".preview.png").exists())
+                self.assertEqual(frames.main([flat, "--max-side", "400"]), 1)
+                self.assertEqual(frames.main([left, right]), 2)
+                self.assertEqual(frames.main([left, "--reject", waiting]), 2)
+                self.assertEqual(frames.main([str(Path(tmp) / "missing.png"), "--reject", waiting]), 2)
+            lines = out.getvalue().splitlines()
+            self.assertEqual([line.split(" (")[0].split(":")[0] for line in lines if line.startswith(("VERDICT", "ERROR"))],
+                             ["VERDICT PASS", "VERDICT FAIL", "VERDICT INCONCLUSIVE", "VERDICT INCONCLUSIVE",
+                              "ERROR FileNotFoundError"])
+            self.assertTrue(Path(left).with_suffix(".preview.png").exists())
+            with Image.open(Path(flat).with_suffix(".preview.png")) as preview:
                 self.assertEqual(max(preview.size), 400)
 
 
@@ -212,6 +295,23 @@ class TraceQueryTests(unittest.TestCase):
         rows = tq.query(TRACE, type_="event")
         self.assertEqual(tq.format_rows(rows, tq.default_fields(rows), 10).splitlines()[0], "t\ttype\tevent\tdetail")
 
+    def test_mistyped_event_names_are_errors_not_empty_results(self):
+        for kwargs in ({"around": "doge"}, {"event": "doge"}):
+            with self.assertRaisesRegex(ValueError, "no event named 'doge'.*dodge, focus_lost"):
+                tq.query(TRACE, **kwargs)
+        self.assertEqual(tq.query(TRACE, type_="event", start=10.0), [])  # no match in a window is fine
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            trace = Path(tmp) / "trace.jsonl"
+            trace.write_text("\n".join(json.dumps(r) for r in TRACE), encoding="utf-8")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(tq.main([str(trace), "--around", "doge"]), 2)
+                self.assertEqual(tq.main([str(Path(tmp) / "missing.jsonl"), "--count"]), 2)
+                self.assertEqual(tq.main([str(trace), "--around", "dodge"]), 0)
+            self.assertEqual([line.split(":")[0] for line in out.getvalue().splitlines()[:2]],
+                             ["ERROR NoSuchEvent", "ERROR FileNotFoundError"])
+
 
 class CheckExpectTests(unittest.TestCase):
     METRICS = {"terminal": "completed", "root": {"right_metres": 0.62, "forward_metres": 0.11},
@@ -234,6 +334,21 @@ class CheckExpectTests(unittest.TestCase):
         self.assertIn("= missing", results[0][1])
         with self.assertRaises(ValueError):
             expect.check([{"metric": "terminal"}], self.METRICS)
+
+    def test_a_run_that_cannot_be_judged_exits_2_not_1(self):
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            scenario, metrics = Path(tmp) / "s.json", Path(tmp) / "m.json"
+            scenario.write_text(json.dumps({"expect": [{"metric": "terminal", "equals": "completed"}]}), encoding="utf-8")
+            metrics.write_text("{not json", encoding="utf-8")
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(expect.main([str(scenario), str(metrics)]), 2)
+                self.assertEqual(expect.main([str(scenario), str(Path(tmp) / "missing.json")]), 2)
+                metrics.write_text(json.dumps({"terminal": "aborted"}), encoding="utf-8")
+                self.assertEqual(expect.main([str(scenario), str(metrics)]), 1)
+            lines = out.getvalue().splitlines()
+            self.assertTrue(lines[0].startswith("ERROR JSONDecodeError") and lines[1].startswith("ERROR FileNotFoundError"), lines)
 
 
 EYE_H, EYE_W = 88, 160
@@ -348,6 +463,20 @@ class EyeFlickerTests(unittest.TestCase):
             self.assertEqual(len(saved), 1)
             with Image.open(saved[0]) as strip:
                 self.assertEqual(strip.size, (2 * EYE_W, 3 * EYE_H))
+
+    def test_a_stream_that_cannot_be_measured_exits_2_not_1(self):
+        import tempfile
+        left = game_frames(10, repeat=1)
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp) / "run"
+            write_stream(prefix, left, left)
+            out = io.StringIO()
+            with contextlib.redirect_stdout(out):
+                self.assertEqual(flicker.main([str(Path(tmp) / "missing"), "--max-one-eye", "1"]), 2)
+                self.assertEqual(flicker.main([str(prefix), "--from", "21:00:00", "--max-one-eye", "1"]), 2)
+            lines = out.getvalue().splitlines()
+            self.assertTrue(lines[0].startswith("ERROR FileNotFoundError"), lines)
+            self.assertTrue(lines[1].startswith("ERROR too few frames"), lines)
 
 
 class ScenarioExampleTests(unittest.TestCase):
