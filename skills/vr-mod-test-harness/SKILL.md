@@ -24,7 +24,13 @@ should print a verdict first, and you only open the evidence when the verdict is
 - Exit codes: 0 PASS, 1 FAIL, 2 no result (an ERROR line, or frame_check's INCONCLUSIVE). Treat 2
   as "not checked", never as a pass or a fail.
 
-Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the repo's venv.
+Scripts need numpy and Pillow in the repo's venv; the kit's setup installs them:
+
+```
+python -m pip install -r .agents/skills/vr-mod-test-harness/scripts/requirements.txt
+```
+
+Commands below run from the repo root, with the venv's Python.
 
 ## See
 
@@ -40,7 +46,7 @@ Scripts need `pip install -r scripts/requirements.txt` (numpy, Pillow) in the re
   do the looking:
 
   ```
-  python scripts/frame_check.py left.png right.png --reject waiting.png --ref golden_left.png
+  python .agents/skills/vr-mod-test-harness/scripts/frame_check.py left.png right.png --reject waiting.png --ref golden_left.png
   ```
 
   It checks each eye isn't blank, doesn't match a known-bad screen (save one capture of the
@@ -78,9 +84,13 @@ becomes a direction/view-heading test measuring displacement; "the lever doesn't
 becomes a selected-target interaction test measuring puzzle state. Use poses to test recognizers,
 action inputs to test mapping, and game observations to test outcomes. A requested input is
 never proof the game performed it. Keep the failing scenario as a regression after fixing it
-(check that removing the fix fails it). Write the pass condition as an `expect` list and judge each run
-with `scripts/check_expect.py scenario.json run.metrics.json`, so a run reads as a few PASS/FAIL
-lines and the trace is only opened when something fails.
+(check that removing the fix fails it). Write the pass condition as an `expect` list and judge
+each run with it, so a run reads as a few PASS/FAIL lines and the trace is only opened when
+something fails:
+
+```
+python .agents/skills/vr-mod-test-harness/scripts/check_expect.py scenario.json run.metrics.json
+```
 
 **Replay recorded traces through the production rules.** When a playtest says a gesture "stopped
 working", feed the human's recorded traces through the same recognizer code the mod runs,
@@ -115,9 +125,10 @@ column nobody asserted.
   context changes, gesture outcomes, warnings and relevant capability metrics). Offset/drift
   measurements apply only where tracked body/camera alignment is meaningful. Read it after
   every run; human feedback still decides feel and comfort.
-- **Query, don't read.** A trace runs to megabytes per minute. Use
-  `scripts/trace_query.py trace.jsonl --count` for what's in it, then `--around <event> --window 1
-  --fields t,<path>,... --every 3` for the few seconds that matter. Output is tab-separated and
+- **Query, don't read.** A trace runs to megabytes per minute. Use `trace_query.py` with
+  `--count` for what's in it, then `--around <event> --window 1 --fields t,<path>,... --every 3`
+  for the few seconds that matter:
+  `python .agents/skills/vr-mod-test-harness/scripts/trace_query.py trace.jsonl --count`. Output is tab-separated and
   capped at 50 rows.
 - **Run report against known states**: a script that reads any run's mod log (the agent's or a
   playtest's) and lists the game states, refusal and error codes, fallbacks, stops, recoveries and

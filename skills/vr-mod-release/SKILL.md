@@ -6,7 +6,7 @@ description: Package a VR mod for players and make its repository safe to publis
 # Releasing a VR mod
 
 Two jobs: a repository that holds only your own work, and the package players run. Do the legal
-checklist first: [before-publishing](../../checklists/before-publishing.md). Nothing here is
+checklist first: `checklists/before-publishing.md` at the repo root. Nothing here is
 legal advice; publisher permission and the project's scope are the human's decisions.
 
 ## Nothing of the game's leaves your machine

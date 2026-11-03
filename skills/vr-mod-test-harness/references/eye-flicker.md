@@ -12,7 +12,7 @@ reusing something the first eye computed.
   [`scripts/mirror_capture/openvr_mirror_capture.cpp`](../scripts/mirror_capture/openvr_mirror_capture.cpp):
 
   ```
-  cmake -S scripts/mirror_capture -B build/mirror_capture -DOPENVR_SDK_DIR=<openvr sdk>
+  cmake -S .agents/skills/vr-mod-test-harness/scripts/mirror_capture -B build/mirror_capture -DOPENVR_SDK_DIR=<openvr sdk>
   cmake --build build/mirror_capture --config Release
   openvr_mirror_capture C:/runs/r1/eyes stream 36 16
   ```
@@ -28,7 +28,7 @@ reusing something the first eye computed.
 ## Measure
 
 ```
-python scripts/eye_flicker.py C:/runs/r1/eyes --events --max-one-eye 1.0
+python .agents/skills/vr-mod-test-harness/scripts/eye_flicker.py C:/runs/r1/eyes --events --max-one-eye 1.0
 ```
 
 - **Blip**: a cell of an 8x8 grid that jumps more than 8 luma levels for one game frame and comes

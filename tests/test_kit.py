@@ -30,7 +30,6 @@ flicker = load("eye_flicker", HARNESS)
 
 
 class VoiceCaptureTests(unittest.TestCase):
-    # Carried over from sm2-vr tests/test_voice_capture.py.
     def test_trigger_requires_whole_utterance(self):
         self.assertTrue(voice.is_trigger("Go ahead."))
         for text in ("Don't go ahead", "I'll go ahead and test the pistol", "go ahead now"):
@@ -619,14 +618,65 @@ class KitStructureTests(unittest.TestCase):
         readme = (ROOT / "README.md").read_text(encoding="utf-8")
         self.assertIn("## For agents: setting up the kit", readme)
         self.assertRegex(readme, r"(?m)^> Read https://github\.com/Joe975/vr-modding-with-agents ")
-        for template in ("AGENTS.md", "CLAUDE.md", "STATUS.md"):
+        for template in ("AGENTS.md", "CLAUDE.md", "STATUS.md", "gitignore"):
             self.assertIn(f"templates/{template}", readme)
             self.assertTrue((ROOT / "templates" / template).is_file())
 
-    def test_relative_links_resolve(self):
+    def installed(self, into):
+        """The user's repo after the README's setup steps 2-3."""
+        import shutil
+        for template in ("AGENTS.md", "CLAUDE.md", "STATUS.md"):
+            shutil.copy(ROOT / "templates" / template, into / template)
+        shutil.copy(ROOT / "templates" / "gitignore", into / ".gitignore")
+        (into / "checklists").mkdir()
+        shutil.copy(ROOT / "checklists" / "before-publishing.md", into / "checklists")
+        for agent in (".agents", ".claude"):
+            shutil.copytree(ROOT / "skills", into / agent / "skills")
+        return into
+
+    def links(self, path):
+        return re.findall(r"\]\(([^)#:]+)(?:#[^)]*)?\)", path.read_text(encoding="utf-8"))
+
+    def test_relative_links_resolve_in_the_kit_and_once_installed(self):
+        import tempfile
         for path in self.kit_files((".md",)):
-            for target in re.findall(r"\]\(([^)#:]+)(?:#[^)]*)?\)", path.read_text(encoding="utf-8")):
+            for target in self.links(path):
                 self.assertTrue((path.parent / target).exists(), f"{path.relative_to(ROOT)} -> {target}")
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.installed(Path(tmp))
+            for path in repo.rglob("*.md"):
+                for target in self.links(path):
+                    self.assertTrue((path.parent / target).exists(), f"installed {path.relative_to(repo)} -> {target}")
+
+    def test_gitignore_template_keeps_game_material_and_voice_out_but_not_the_mod(self):
+        import shutil
+        import subprocess
+        import tempfile
+        if not shutil.which("git"):
+            self.skipTest("git not installed")
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.installed(Path(tmp))
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            ignored = ["sessions/session-1/audio.wav", "sessions/session-1/transcript.md", "game.dmp",
+                       "re/project.gpr", "re/project.rep/data", "runs/r1/eyes.rgb", "trace.jsonl",
+                       "left.preview.png", "build/mod.dll", ".venv/pyvenv.cfg"]
+            kept = ["src/mod.cpp", "AGENTS.md", "STATUS.md", "tests/scenarios/dodge.json",
+                    ".agents/skills/vr-mod-research/SKILL.md", "docs/CONTROLS.md"]
+            result = subprocess.run(["git", "-C", str(repo), "check-ignore", "--no-index", *ignored, *kept],
+                                    capture_output=True, text=True)
+            self.assertEqual(sorted(result.stdout.split()), sorted(ignored))
+
+    def test_commands_name_paths_that_exist_once_installed(self):
+        # Agents run commands from the repo root, so a bare `scripts/...` path fails there.
+        import tempfile
+        with tempfile.TemporaryDirectory() as tmp:
+            repo = self.installed(Path(tmp))
+            for path in self.kit_files((".md",)):
+                text = path.read_text(encoding="utf-8")
+                for target in re.findall(r"\.agents/skills/[\w./-]+\.(?:py|txt|md)", text):
+                    self.assertTrue((repo / target).is_file(), f"{path.relative_to(ROOT)}: {target}")
+                for line in re.findall(r"(?m)^\s*(?:python|cmake -S) +scripts/\S+", text):
+                    self.fail(f"{path.relative_to(ROOT)}: runs from the skill folder, not the repo root: {line.strip()}")
 
 
 if __name__ == "__main__":

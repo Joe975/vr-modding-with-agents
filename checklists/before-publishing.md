@@ -1,7 +1,7 @@
 # Before publishing a VR mod
 
 Share the method always. Before publishing the mod itself (packaging and the public-repo cleanup:
-the [vr-mod-release](../skills/vr-mod-release/SKILL.md) skill):
+the `vr-mod-release` skill, in `.agents/skills/` or `.claude/skills/`):
 
 - [ ] **EULA.** Most restrict reverse engineering; what that means depends on where you live. Read it.
 - [ ] **Publisher's modding policy.** The user has checked the publisher's current guidance on

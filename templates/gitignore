@@ -1,0 +1,45 @@
+# Copy to the mod repo's root as .gitignore and merge with any existing one.
+# Keep game material and the human's voice out of git. Check `git status` before the first commit.
+
+# Voice playtests: the human's recorded voice, transcripts and session state
+sessions/
+CURRENT_SESSION.txt
+*.wav
+*.flac
+*.mp3
+
+# Run output: eye captures, mirror streams, traces, logs, failure previews
+runs/
+*.rgb
+*.times
+*.ppm
+*.preview.png
+*.jsonl
+*.log
+
+# Crash and memory dumps of the game process
+*.dmp
+*.mdmp
+
+# Decompiler and disassembler projects and output: they hold the game's code
+*.gpr
+*.rep/
+*.idb
+*.i64
+*.id0
+*.id1
+*.nam
+*.til
+ghidra/
+decompiled/
+signatures/
+
+# Game files copied in for testing
+*.pak
+*.exe.bak
+
+# Build output and Python
+build/
+out/
+.venv/
+__pycache__/

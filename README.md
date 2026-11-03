@@ -17,7 +17,8 @@ That's it. The agent does the rest using the instructions below.
 You've been asked to set up this kit in the user's mod repo (the current working directory).
 
 1. Get the kit: `git clone --depth 1 https://github.com/Joe975/vr-modding-with-agents` into a
-   temporary folder outside the user's repo, or fetch the files directly.
+   temporary folder outside the user's repo. Note the kit commit now
+   (`git -C <temp folder> rev-parse --short HEAD`); the clone is deleted in step 6.
 2. Copy into the root of the user's repo, without overwriting anything that already exists
    (if a file exists, merge in the missing parts and say what you changed):
    - `templates/AGENTS.md` -> `AGENTS.md`. Fill in the bracketed parts with what you know (game
@@ -25,18 +26,30 @@ You've been asked to set up this kit in the user's mod repo (the current working
      brackets in place and list them in `STATUS.md` under "Waiting on the human".
    - `templates/CLAUDE.md` -> `CLAUDE.md` (it just imports `AGENTS.md`).
    - `templates/STATUS.md` -> `STATUS.md`. Add the first log entry: kit set up, date, kit commit.
+   - `templates/gitignore` -> `.gitignore`. It keeps voice recordings, captures, dumps and
+     decompiler projects out of git.
    - `checklists/before-publishing.md` -> `checklists/before-publishing.md`.
 3. Copy each folder under `skills/` into both `.agents/skills/` (Codex) and `.claude/skills/`
-   (Claude Code), keeping the folder names. Both agents then find the same skills.
-4. Ask whether the user wants voice-recorded playtests. If so, make a Python venv in their repo
-   and follow the one-time setup in the `vr-playtest-loop` skill (it asks before downloading the
-   speech model). Otherwise skip it; they can add it later.
-5. Delete the temporary clone. Commit the setup if the repo uses git.
-6. Tell the user what you set up in two or three lines, then run the `vr-mod-research` skill for
-   their game. Don't write mod code during the research pass.
+   (Claude Code), keeping the folder names. Both agents then find the same skills. Commands in
+   the skills are written to run from the repo root with the `.agents/skills/...` paths.
+4. Make a Python venv in the repo (`python -m venv .venv`) and install the harness scripts'
+   packages into it:
+   `.venv/Scripts/python -m pip install -r .agents/skills/vr-mod-test-harness/scripts/requirements.txt`
+   (`.venv/bin/python` on Linux and macOS). Run the kit's scripts with that Python.
+5. Ask whether the user wants voice-recorded playtests. If so, follow the one-time setup in the
+   `vr-playtest-loop` skill with the same venv (it asks before downloading the speech model).
+   Otherwise skip it; they can add it later.
+6. Delete the temporary clone. Git marks its pack files read-only, so a plain delete can fail:
+   use `Remove-Item -Recurse -Force <temp folder>` in PowerShell or `rm -rf <temp folder>`
+   elsewhere. Commit the setup if the repo uses git.
+7. Skills copied during a session may not load in that session. Don't wait for them: read
+   `.agents/skills/vr-mod-research/SKILL.md` directly and follow it. Tell the user to restart
+   Codex or Claude Code before the next session so every skill loads by name.
+8. Tell the user what you set up in two or three lines, then run the research pass for their
+   game. Don't write mod code during the research pass.
 
-To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.md` and
-`AGENTS.md` edits.
+To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.md`, `AGENTS.md`
+and `.gitignore` edits.
 
 ## For humans
 
@@ -45,6 +58,7 @@ To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.
 | [templates/AGENTS.md](templates/AGENTS.md) | all | Project instructions for your mod repo, shared by Codex and Claude Code |
 | [templates/CLAUDE.md](templates/CLAUDE.md) | all | Claude Code entry point; just imports AGENTS.md |
 | [templates/STATUS.md](templates/STATUS.md) | all | Blank scratch pad the agents keep up to date, so each session picks up where the last left off |
+| [templates/gitignore](templates/gitignore) | all | Your repo's `.gitignore`: voice recordings, captures, dumps and decompiler projects stay out of git |
 | [skills/vr-mod-research](skills/vr-mod-research/SKILL.md) | Do the homework | The research pass before any code |
 | [skills/vr-mod-test-harness](skills/vr-mod-test-harness/SKILL.md) | Get the agent to test its own work | Letting the agent see, play and measure without you |
 | [skills/vr-playtest-loop](skills/vr-playtest-loop/SKILL.md) | Playtest | Voice-recorded playtests, reproduce-before-fix |
@@ -53,9 +67,10 @@ To update the kit later, repeat steps 1-3 and merge, keeping the user's `STATUS.
 | [skills/vr-mod-release](skills/vr-mod-release/SKILL.md) | Sharing | The player package (installer, launch profile, updates) and a public repo with none of the game's code in it |
 | [checklists/before-publishing.md](checklists/before-publishing.md) | Sharing | EULA, modding policy, anti-cheat, redistribution |
 
-**By hand:** copy the three files in `templates/` to your repo's root and fill in the brackets in
-`AGENTS.md`, then copy each folder under `skills/` into both `.agents/skills/` and
-`.claude/skills/`.
+**By hand:** copy the `.md` files in `templates/` to your repo's root and `templates/gitignore`
+as `.gitignore`, and fill in the brackets in `AGENTS.md`. Copy each folder under `skills/` into
+both `.agents/skills/` and `.claude/skills/`, and install
+`.agents/skills/vr-mod-test-harness/scripts/requirements.txt` into a venv.
 
 ## Adapting it to a game
 
