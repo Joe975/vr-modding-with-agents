@@ -233,6 +233,65 @@ class FrameCheckTests(unittest.TestCase):
         offset = verdict(frames.run_checks({"left": tall[:240], "right": tall[30:270]}))
         self.assertFalse(offset["stereo-shift"])
 
+    def test_depth_is_searched_around_a_large_overall_offset(self):
+        # Headset eyes with asymmetric fields of view sit ~20% of the frame apart as a whole; a
+        # search around zero matches nothing and used to fail real stereo.
+        wide, near = scene(21, (240, 520)), scene(22, (240, 520))
+        left, right = wide[:, 0:360].copy(), wide[:, 62:422].copy()  # background: left - right = +62
+        left[:, 90:180] = near[:, 90:180]
+        right[:, 50:140] = near[:, 90:180]  # a pillar at its own disparity: +40
+        self.assertLess(len(frames.disparities(left, right)), 4)  # the old search: next to nothing in reach
+        results = frames.run_checks({"left": left, "right": right})
+        self.assertTrue(verdict(results)["depth"], results)
+
+    def test_too_few_matched_tiles_is_unsure_not_a_fail(self):
+        left, right = depth_pair()
+        left, right = left.copy(), right.copy()
+        left[:, 90:], right[:, 90:] = 0.5, 0.5  # only the left quarter has texture
+        results = frames.run_checks({"left": left, "right": right})
+        depth_ok = [ok for ok, line in results if line.startswith("depth")]
+        self.assertEqual(depth_ok, [None])
+        word, reason = frames.verdict(results, {"l": left, "r": right}, reject=[("waiting", scene(2))])
+        self.assertEqual(word, "INCONCLUSIVE")
+        self.assertIn("depth couldn't judge", reason)
+
+    def test_region_shift_measures_source_pixels_to_a_fraction(self):
+        wide = scene(23, (720, 1200))
+        big = np.kron(wide, np.ones((2, 2)))  # smooth at source scale, 1440 x 2400
+        left, right = big[:, 12:1812], big[:, 0:1800]  # left[x] == right[x + 12]: left - right = -12
+        dx, dy = frames.region_shift(left, right, (0.2, 0.2, 0.8, 0.8))
+        self.assertAlmostEqual(dx, -12, delta=0.5)
+        self.assertAlmostEqual(dy, 0, delta=0.5)
+
+    def test_near_box_must_sit_at_a_larger_disparity_than_far(self):
+        wide, near = scene(24, (240, 400)), scene(25, (240, 400))
+        left, right = wide[:, 8:368].copy(), wide[:, 10:370].copy()  # background: left - right = +2
+        left[60:220, 128:268] = near[60:220, 120:260]
+        right[60:220, 120:260] = near[60:220, 120:260]  # nearer block: left - right = +8
+        two = {"left": left, "right": right}
+        near_box, far_box = (0.40, 0.30, 0.70, 0.88), (0.0, 0.0, 1.0, 0.22)
+        good = verdict(frames.run_checks(two, near=near_box, far=far_box))
+        self.assertTrue(good["near"])
+        swapped = verdict(frames.run_checks(two, near=far_box, far=near_box))
+        self.assertFalse(swapped["near"])
+
+    def test_same_pose_eyes_must_line_up_everywhere(self):
+        # Zero separation: identical eyes pass; a warp that moves part of one eye by a few pixels
+        # (lens distortion pushes the edges out) fails, though the plain stereo checks can't see it.
+        img = np.kron(scene(26, (240, 360)), np.ones((3, 3)))
+        warped = img.copy()
+        warped[:, 540:] = np.roll(img, 4, axis=1)[:, 540:]
+        same = frames.run_checks({"left": img, "right": img.copy()}, same_pose_mode=True)
+        self.assertTrue(all(ok for ok, _ in same), same)
+        bad = verdict(frames.run_checks({"left": img, "right": warped}, same_pose_mode=True))
+        self.assertFalse(bad["pose"])
+
+    def test_boxes_are_fractions_in_order(self):
+        self.assertEqual(frames.parse_box("0.1,0.2,0.5,0.9"), (0.1, 0.2, 0.5, 0.9))
+        for text in ("0.5,0.2,0.1,0.9", "0,0,1.5,1", "0,0,1"):
+            with self.assertRaises(ValueError):
+                frames.parse_box(text)
+
     def test_cli_writes_previews_only_on_failure(self):
         try:
             from PIL import Image
@@ -604,7 +663,8 @@ class KitStructureTests(unittest.TestCase):
 
     def test_kit_is_game_agnostic(self):
         # Space Marine 2 belongs in the writeup, not the reusable kit.
-        banned = re.compile(r"SM2|sm2|Space Marine|Saber|Warhammer|Emperor|chainsword|\bJoe\b", re.I)
+        banned = re.compile(r"SM2|sm2|Space Marine|Saber|Warhammer|Emperor|chainsword|\bJoe\b"
+                            r"|Darktide|Fatshark|Stingray|Cult of the Lamb|Massive Monster|Rewired", re.I)
         for path in self.kit_files():
             hit = banned.search(path.read_text(encoding="utf-8"))
             self.assertIsNone(hit, f"{path.relative_to(ROOT)}: {hit and hit.group(0)}")

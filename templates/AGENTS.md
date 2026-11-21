@@ -16,6 +16,14 @@ Project scope: [user's chosen modes and relevant publisher guidance; see RESEARC
 - **Don't ask the human to check what you can check.** You can see the headset through SteamVR's
   VR View (or the mod's own eye snapshots), drive the controllers with the test driver, and read
   the trace and logs. Ask for the headset only for feel and comfort.
+- **But get a first headset look early.** Once stereo and the camera pass their checks, ask for
+  five minutes in the headset before performance work, soak runs or new features. Scale, held
+  objects and the HUD are seen at once by a person and missed by automated checks.
+- **Never wave off a failing check.** Fix the check with a test, or write why the FAIL doesn't
+  apply in the run log, before building on the result.
+- **Soak before "ready", and log every crash.** Several minutes of the heaviest gameplay over
+  several fresh launches before calling a build playtest-ready; every crash goes in the crash
+  ledger in `STATUS.md` with its signature and run.
 - **Look, don't count.** A submission counter going up isn't proof an image reached the headset.
   Check both eyes with `frame_check.py` (test-harness skill) and a known-bad `--reject` or golden
   `--ref`; only VERDICT PASS confirms. INCONCLUSIVE means it couldn't tell, not that it worked.

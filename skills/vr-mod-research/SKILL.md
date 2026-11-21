@@ -28,6 +28,11 @@ recommendation the human can argue with.
 - Graphics API (D3D11, D3D12, Vulkan): decides the swapchain and texture-sharing code.
 - Where the camera, the projection matrix and the frame boundary live. Ghidra headless and
   RenderDoc fill the gaps the web doesn't.
+- Every camera that renders a frame (child cameras for lighting masks, outlines, overlays) and
+  every field that shapes the picture: a separate field of view for first-person arms and held
+  items, near/far planes, offsets. Note which systems compute their own frustum from field of view
+  and aspect (shadows, backdrops) and which effects allocate screen-sized buffers; both decide how
+  the eyes can be rendered (test harness, "Every camera field matches the eye").
 - Whether the engine already has a second camera or multi-view path (picture-in-picture, split
   screen, mirrors, scope rendering). This decides whether same-frame stereo is possible.
 - Available AA/upscaling paths, per-eye temporal state, visibility/culling and shadow caches.
@@ -48,7 +53,11 @@ recommendation the human can argue with.
   and context-dependent bindings. Don't assume melee, a humanoid body or a virtual pad exists.
 - Ask for the intended experience if unknown: camera support with existing controls, tracked
   interaction, external/tabletop view, seated cockpit, or a mixture. Choose camera and input
-  independently; defer detailed mappings to `vr-controls-design`.
+  independently; defer detailed mappings to `vr-controls-design`. In the same question, ask how
+  the HUD and menus should appear (a HUD layer, panels, hidden); don't default to a copy of the
+  whole flat screen.
+- Dump the game's binding map per context before proposing any mod-owned control, and name a
+  button as free only from that dump.
 
 ## 4. Recommend, with evidence
 

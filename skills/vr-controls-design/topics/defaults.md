@@ -34,7 +34,10 @@ them; a cockpit, external view or cursor-driven game need not use character loco
   camera ([test harness](../../vr-mod-test-harness/SKILL.md#the-image-matches-the-camera)).
 - **HUD panels:** status panels head-locked below the line of sight, readable with a glance down
   and clear of where the player aims. Starting defaults at 1.2 m: the main status strip about 19°
-  below straight ahead, a second panel about 27° below; both live settings.
+  below straight ahead, a second panel about 27° below; both live settings. These defaults are for
+  embodied views. External and tabletop views have their own HUD rule
+  ([diorama](../archetypes/diorama.md)); in any view, ask the human early how the HUD and menus
+  should appear rather than shipping a copy of the whole flat screen.
 - **Crosshair where the weapon points:** a crosshair fixed to the player's face only marks the aim
   when the head steers the aim. Where the gameplay camera, the head and the weapon can point
   different ways (gamepad aim, tracked aiming, external or tabletop views):

@@ -104,6 +104,10 @@ The 2026-10-20 revision separates game capabilities, camera and input choices, a
 scenario examples tested against representative passing/failing metrics. These are contract tests,
 not live validation in multiple games. The 2026-10-22 revision adds the release skill (player
 package, public-repo cleanup), distilled from a release being prepared, not one that has shipped.
+The 2026-11-22 revision adds lessons from two more builds that started from this kit (a tabletop
+view of a third-person game, and a first-person game with tracked aiming): camera fields that
+must match the eye, external-view HUDs, an early headset gate, crash soaks and a crash ledger,
+and `frame_check.py` same-pose and near/far checks.
 
 **Licence:** [MIT](LICENSE). Use it, change it, ship it in your own mods, commercial or not; just
 keep the copyright notice with any copies of the kit itself.

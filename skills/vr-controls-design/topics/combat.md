@@ -19,6 +19,12 @@ If the mod drives a visible weapon from a tracked hand, it needs the weapon's fi
 hand. That is often learned from an attachment socket on the skeleton, and from the socket readings
 the mod may also infer what is held.
 
+- **Match the held-item field of view first.** If the game draws arms and weapons in their own
+  pass with a narrower field of view than the world, the weapon is magnified and no grip offset
+  makes it sit in the hand. Set that pass to the eye's projection, then tune the fit, and prove it
+  in a headset eye image, not a monitor capture
+  ([test harness](../../vr-mod-test-harness/SKILL.md#every-camera-field-matches-the-eye)).
+
 - **A socket only gives the fit while the weapon is on it.** With the weapon elsewhere, the same
   socket can sit in another item's grip, and a fit learned then stays wrong for the life of the
   character: the weapon and its aim ray are both off. Learn from the socket after the weapon has

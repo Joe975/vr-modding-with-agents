@@ -45,11 +45,17 @@ One entry per broad workaround; link longer evidence rather than copying logs he
 
 ## Waiting on the human
 
+- [ ] First headset look (once stereo and the camera pass): [open / done, date, findings]
 - [ ] [Headset checks that need a person: what to launch, what to do, what to look for]
 
 ## Open issues
 
 - [ ] [Issue: how to reproduce it, current evidence]
+
+## Crash ledger
+
+| Date | Signature (module+offset or error ID) | Run | Build and settings | Doing what | Linked issue |
+|---|---|---|---|---|---|
 
 ## Log
 

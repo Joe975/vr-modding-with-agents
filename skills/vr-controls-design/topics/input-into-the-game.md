@@ -15,6 +15,10 @@ in config, traces and tests. Confirm the game consumed the input and performed t
 - Name actions by what they do in each context, not by physical binding. Check gameplay, menus,
   vehicles and any other modes the game has; one key or button can do different things.
 - Keep relied-on bindings/config in a versioned preset where possible and verify what's loaded.
+- **Pick a mod button from a binding dump, not a guess.** Before giving the mod its own control
+  (recentre, a panel toggle), have the mod log the game's full binding map per context, tap and
+  hold included, and choose an input that map shows free. A button that looks spare often has a
+  held or context-specific meaning. Tell the human a binding is free only once the dump says so.
 - Neutralise output on focus/tracking loss and adopt the new input route if the game recreates
   it. Require release/re-arm before a held controller input becomes a new context's action.
 - **Check what a game button does when held.** Many mean one thing tapped and another held (dodge,
@@ -64,3 +68,7 @@ the mapping early, ranked by how often each shows and how badly it misleads, and
   more reliable than the system API.
 - **Survive focus loss and re-enumeration.** When the game loses focus it may drop and re-create its
   controller. Neutralise input while unfocused and re-adopt the game's new route on return.
+- **Running in the background isn't input in the background.** Forcing the engine to keep running
+  while unfocused keeps frames coming, but many input libraries still ignore controllers until the
+  window has focus, so the player's pad does nothing. The launcher should bring the game window to
+  the front once gameplay starts, and the trace should log which window has focus.

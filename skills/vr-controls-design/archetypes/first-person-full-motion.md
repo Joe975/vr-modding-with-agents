@@ -10,7 +10,10 @@ visibility and clipping rather than assuming a distance or FOV setting is enough
 
 **Build, in order:**
 
-1. Head drives the view. Hide obstructing head geometry if there is a rendered player body.
+1. Head drives the view. Hide obstructing head geometry if there is a rendered player body. If
+   the game draws first-person arms and held items with their own field of view, set it to the
+   eye's ([test harness](../../vr-mod-test-harness/SKILL.md#every-camera-field-matches-the-eye)).
+   Then ask for a first five-minute headset look before building further.
 2. Apply relevant [defaults](../topics/defaults.md): recentre, calibration and comfort, with
    locomotion only if this context needs it.
 3. Prove one representative interaction from the action inventory, through to its game outcome:

@@ -59,7 +59,17 @@ Commands below run from the repo root, with the venv's Python.
   INCONCLUSIVE as not confirmed. ERROR (2) means it couldn't run. Previews are written on FAIL
   and INCONCLUSIVE. Thresholds are starting defaults; calibrate them on a few known-good and
   known-bad captures of your own. Golden images only work for captures at a fixed scripted pose
-  in a fixed scene.
+  in a fixed scene. Two stronger checks, worth adding as soon as the mod can set them up:
+  - `--same-pose`: render both eyes from one pose (eye separation 0) and every region must line
+    up within a pixel. This catches post effects that warp the finished image, which the plain
+    stereo checks pass. Mirrored offsets (left eye pushed left, right eye pushed right) are a warp.
+  - `--near x0,y0,x1,y1 --far x0,y0,x1,y1`: boxes, as fractions of the eye image, on something
+    close and something distant at a scripted pose; the near box must sit at the larger
+    disparity. That proves depth in the right direction, which the tile check can't.
+
+  The depth check reports UNSURE, not FAIL, when too few tiles match to judge. **Never wave off a
+  FAIL** ("the headset's asymmetric view probably explains it"): either fix the check, with a
+  test, or write the reason in the run log before building on the result.
 - **A fallback can pass a frame check.** If the mod falls back to a flat panel or mono view when
   stereo stops, "frames submitted" keeps climbing. Run checkers should require the primary path
   (real stereo pairs from the stereo producer) and fail on any stop or fallback line. Prove each
@@ -69,8 +79,16 @@ Commands below run from the repo root, with the venv's Python.
   chain, eye copies, colour targets, upscaler input) and compare a capture against a known whole
   eye at the same pose: a crop differs far more than a resize does.
 - **Focus trap.** Bringing the mirror window to the foreground takes focus from the game, which can
-  stop the game's controller input. Make the mod survive focus loss, and prefer having the mod save
-  its own per-eye snapshots (an opt-in flag) so tests never touch the mirror.
+  stop the game's controller input. Prefer having the mod save its own per-eye snapshots (an
+  opt-in flag) so tests never touch the mirror. Surviving focus loss means two separate things:
+  the engine may pause entirely while unfocused (force it to keep running), and its input library
+  may ignore controllers while unfocused even when it runs. Fixing the first hides the second
+  until a human picks up the pad, so have the launcher focus the game window once gameplay starts
+  and log the foreground window in the trace.
+- **A passing check is not a passing image.** Stereo and hook checks say nothing about overlays,
+  shadows, glows or dark bands that don't sit on their surface or that follow the head. When you
+  open an eye snapshot, look for exactly those, and treat "my captures don't show it" as a gap in
+  the capture (wrong moment, fake eyes too narrow) until proven otherwise.
 
 ## Play
 
@@ -110,7 +128,10 @@ or asset set from a normal launch, so a check can pass there while the feature d
 players. Have each feature log what it changed (parts written, not just "ran"), make every refusal
 name the field that failed, and have the run report flag a feature that ran with zero effect on a
 normal launch. Two mechanisms for one job hide this: while one half works, nobody notices the
-other never applied.
+other never applied. A hook proven in one scene type can miss in another (a per-level object
+that bypasses the class you hooked), and co-installing another mod or a mod framework can change
+which callbacks reach yours. Rerun the outcome checks in each scene type the mod supports, and
+again whenever another mod is installed alongside.
 
 **Check the outcome, not the label.** A check that reads a state ("held in the right hand") passes
 while the result is wrong (the weapon tens of degrees off). Assert what the player would see. When
@@ -143,6 +164,26 @@ column nobody asserted.
   isolates costs (tracking only / copy only / full submit). Reject captures taken in menus, pause
   or cutscenes. Per-frame costs hiding in setup code (like re-validating the graphics adapter
   every frame) show up here long before anyone notices them in play.
+
+## Crashes and soak
+
+- **Soak before "ready".** A build isn't ready for a playtest until it has run several minutes of
+  the heaviest gameplay it supports (combat with effects, crowds, fast traversal) over several
+  fresh launches, with the crash count recorded. A few shots in a test room misses crashes that
+  only come under load. Two to three fresh launches of five minutes each is a starting gate; a
+  driver or development autopilot that plays the scene makes it cheap.
+- **Count crashes per condition, alternating fresh launches.** Crashes are rare events: compare a
+  suspect switch on and off over alternating fresh launches, and report launches, minutes and
+  crashes per condition. A fix is proven when the on-condition's crash-free time would be very
+  unlikely at the off-condition's rate, not when one run survives.
+- **Keep a crash ledger.** Append every crash to a versioned table: signature (module and offset,
+  or the engine's error ID), run, build, settings, what the game was doing. A signature seen three
+  times gets its own trial count before any fix ships, and a fix that wasn't trialled stays an
+  open issue.
+- **One change per relaunch.** After a crash, write the signature and one hypothesis before
+  launching again, and change one thing. Check hooked engine calls against every viewport and
+  state they can meet (boot screens, menus) offline first: several guessed fixes in a few minutes
+  of relaunches teach nothing.
 
 **Rendering changes require two gates.** Read
 [rendering-compatibility.md](references/rendering-compatibility.md) when adding or changing an
@@ -178,6 +219,14 @@ slots, and anything the game derives from a slot number then indexes out of rang
 - **Check the game's other views** while stereo is on: where they land in the render list, and
   whether anything is indexed by that position. Holding stereo off while one is showing is a safe
   first fix.
+- **A second render call brings its own side effects.** When the mod draws the second eye by
+  calling the engine's render function again, whatever the engine runs after each render (an
+  update of particles or other render-owned objects, garbage collection, culling bookkeeping) now
+  runs between the eyes. It can free objects the second eye's visible list, built earlier, still
+  points at: a use after free that crashes only under load (effects spawning and expiring in
+  combat). Before blaming your own patches for a crash that appears with stereo, trace the
+  engine's per-render callbacks in mono and in stereo, with thread and frame numbers. Write "the
+  second render adds no calls" in the docs only after measuring it.
 
 ## The image matches the camera
 
@@ -208,17 +257,57 @@ what it marks.
   A mode switch or measurement in that window picks up its gaps and looks like a regression;
   wait until stereo has run cleanly for a while, then switch.
 
+### Every camera field matches the eye
+
+The eye's pose and projection are not the only camera state that shapes the picture. List every
+field that does, and assert each one equals the eye's value during the eye render, with a test:
+
+- **A separate field of view for held items.** Many first-person games draw the arms and the held
+  weapon or tool in a pass of their own, with a narrower field of view than the world. Left at the
+  flat value inside a much wider eye, it magnifies them several times over: they loom in front of
+  the face and stop matching the tracked hands. Set it to the eye's field of view (or drop the
+  separate pass) while stereo runs. Also check near and far planes, depth range and any offsets
+  applied to that pass.
+- **Prove a held object in the headset image, never on the monitor.** A desktop screenshot of the
+  weapon following the hand looks right with the wrong field of view, because the monitor shows
+  the flat projection. Check it in an eye snapshot against the hand's projected position, then get
+  a human to confirm it feels in the hand.
+- **Every camera that renders, not just the main one.** Enumerate the active cameras and their
+  parents at gameplay start (lighting masks, outline or stencil cameras, overlay cameras). A child
+  camera left on the flat projection draws ghost copies of the scene in each eye.
+- **Engines that derive state from field of view and aspect.** Shadows, screen-space backdrops and
+  some effects compute their own frustum from the camera's field of view and aspect, not from a
+  custom projection matrix. A custom off-centre projection then leaves those parts in the flat
+  view: shadows that don't match their objects, shapes that follow the head. On such engines start
+  with an ordinary centred camera whose frustum encloses the eye's, render that, and crop the
+  eye's own view out of it. Treat a custom projection as a later optimisation with its own check.
+- **Effects that pair screen-sized buffers.** Some effects allocate buffers at the screen's size and
+  pair them with the camera's depth buffer; an eye-sized target then gives size-mismatch errors or
+  missing effects. Rendering at the screen's size and resampling to the eye works; register it as
+  a workaround (pixel cost, vertical detail capped by the screen) and look for a narrower fix.
+
 ## Plumbing
 
 - **Launcher**: installs the mod, launches straight into a test scene if the game has a modders'
   autostart or scene argument, waits with a deadline, collects logs, trace and snapshots into a
   per-run folder, and always removes the mod afterwards.
 - **Fake eyes**: a synthetic mode with per-frame head poses and per-eye projections so stereo code
-  runs with no headset attached.
+  runs with no headset attached. Copy the target headset's per-eye field of view, asymmetry
+  included (or the widest headset you support). Symmetric, narrow fake eyes hide everything that
+  only goes wrong at the edges of a real eye: flat-projection parts, backdrops sized for the
+  screen, crops.
 - **Tests on real code**: real detours, a mock of the game's middleware, and real GPU work where
   you can get it (on D3D12, the WARP software device can copy eye textures and read them back).
 - **Headset awake**: an unworn headset stops the runtime rendering. Cover the proximity sensor, or
-  turn off SteamVR's "Pause VR when headset is idle".
+  turn off SteamVR's "Pause VR when headset is idle". An unworn headset also reports a wrong
+  head height (resting on a desk or stool): don't calibrate or place anything from it, and start
+  timed snapshots from the first sign of a wearer, not from launch.
+- **Narrow log watches.** A watch the agent is notified from should match errors, human input and
+  quit only; per-frame or per-recentre events flood the conversation. Match log levels exactly:
+  a search for `ERROR` also matches an empty `error=""` field.
+- **Stall timing from the first headset run.** Log per-step worst times, frames over 50 ms and
+  garbage collections per few-second window from the start. When the human reports input delay,
+  the evidence is then already in the run.
 - **Hot reload** for anything tuned by feel (head height, wrist angle).
 - **Transient failures:** one refused capture, one stale poll or one late frame is normal. Don't
   switch a feature off for the run on the first; require a run of consecutive failures with no

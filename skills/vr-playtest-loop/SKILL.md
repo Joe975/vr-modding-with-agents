@@ -11,6 +11,13 @@ description: Run a voice-recorded VR playtest and turn the human's spoken compla
 3. Fix it and prove the fix against your own reproduction.
 4. The human goes back in only to check it feels right, after a batch of fixes rather than each one.
 
+**Get the first look early.** As soon as stereo and the basic camera (and aim, if the mod tracks
+it) pass their checks, ask for a five-minute headset check, before performance tuning, soak
+runs, crash hunts or more features. Scale, held objects that don't match the hands, the HUD and
+comfort are seen in seconds by a person and missed by every automated check, and they change what
+later measurements mean. Record the check as a gate in `STATUS.md` ("first headset look: done,
+date, findings") and don't spend hours of unattended work past it while it's open.
+
 ## Recording
 
 `scripts/voice_capture.py` (in this skill's folder, e.g. `.agents/skills/vr-playtest-loop/scripts/`)
@@ -103,6 +110,11 @@ or unrelated change. Keep the coordinating session small:
 - **After a playtest, work from the evidence first.** A session's complaints can go to parallel
   workers using only its logs, trace and code, with none launching the game. Merge them, run every
   test on the merged build, then do the live checks one at a time.
+
+- **Workers write progress as they go.** Each long-running worker keeps a short progress file
+  (outside git, in the run or build folder) updated at every milestone: what it's doing, last
+  result, what's next. The orchestrator answers "how's it going?" from those, and re-checks a
+  worker's final claims (commit, tests, clean game folder) itself before relaying them.
 
 When a worker's report doesn't settle it, the orchestrator asks that worker a follow-up question
 rather than reading the evidence itself.
