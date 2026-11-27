@@ -664,7 +664,8 @@ class KitStructureTests(unittest.TestCase):
     def test_kit_is_game_agnostic(self):
         # Space Marine 2 belongs in the writeup, not the reusable kit.
         banned = re.compile(r"SM2|sm2|Space Marine|Saber|Warhammer|Emperor|chainsword|\bJoe\b"
-                            r"|Darktide|Fatshark|Stingray|Cult of the Lamb|Massive Monster|Rewired", re.I)
+                            r"|Darktide|Fatshark|Stingray|Cult of the Lamb|Massive Monster|Rewired"
+                            r"|Mordor|Middle-earth|Talion|Celebrimbor|Uruk|Udun|LithTech|Monolith", re.I)
         for path in self.kit_files():
             hit = banned.search(path.read_text(encoding="utf-8"))
             self.assertIsNone(hit, f"{path.relative_to(ROOT)}: {hit and hit.group(0)}")

@@ -41,9 +41,16 @@ Commands below run from the repo root, with the venv's Python.
   background OpenVR client that records both eyes' mirror textures, downscaled on the GPU, with a
   clock time per frame and no window focus change. Method:
   [references/eye-flicker.md](references/eye-flicker.md).
+- **Grab the mirror at the snapshot moment.** When comparing the mirror with the mod's own eye
+  snapshots, the scene moves between snapshot and grab. Take several grabs around the snapshot
+  time and keep the best match; single grabs make a correct headset look broken.
 - **Look, don't count.** A mod can report thousands of submitted stereo pairs with zero failures
-  while the headset shows SteamVR's Waiting screen. Only an image settles it, but a script can
-  do the looking:
+  while the headset shows SteamVR's Waiting screen. One cause: SteamVR rejects every projection
+  layer when the game made its DXGI factory through the 1.0 entry point (`CreateDXGIFactory`).
+  `xrEndFrame` still succeeds; only SteamVR's client log says so ("Failed to create sync
+  texture", `SharedTexturesNotSupported`). A `dxgi.dll` proxy can hand the game a DXGI 1.1
+  factory instead. Read the runtime's client log for errors every run. Only an image settles
+  it, but a script can do the looking:
 
   ```
   python .agents/skills/vr-mod-test-harness/scripts/frame_check.py left.png right.png --reject waiting.png --ref golden_left.png
@@ -109,6 +116,12 @@ something fails:
 ```
 python .agents/skills/vr-mod-test-harness/scripts/check_expect.py scenario.json run.metrics.json
 ```
+
+**Let a model play the real game.** For getting somewhere in the real game (past the intro, into
+a later area) and making a save there, freeze the game between turns and let a vision model pick
+the inputs from a window grab: play becomes turn-based, so a slow model still reacts in time.
+Loop, prompting, reflexes for timed prompts, and judging save progress:
+[references/player-sim.md](references/player-sim.md).
 
 **Replay recorded traces through the production rules.** When a playtest says a gesture "stopped
 working", feed the human's recorded traces through the same recognizer code the mod runs,
@@ -318,6 +331,8 @@ field that does, and assert each one equals the eye's value during the eye rende
   clicking through menus and watching loading screens is the most image-hungry thing an agent
   does. Skip menus with a direct test-scene launch for most runs, and have the mod log a
   `scene_ready` event (or similar) that the launcher waits on instead of watching the screen.
+  Where there is no test scene, make a save past the intro once (a player sim can,
+  [references/player-sim.md](references/player-sim.md)) and start runs from it.
 - **But script the real menu flow too.** A direct launch never exercises startup screens, pause
   menus, level exits or loads, so their bugs only turn up in playtests. Drive them with key presses
   into the game window, keyed off the game's menu/loading state as the mod logs it rather than

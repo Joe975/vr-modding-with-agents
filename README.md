@@ -108,6 +108,12 @@ The 2026-11-22 revision adds lessons from two more builds that started from this
 view of a third-person game, and a first-person game with tracked aiming): camera fields that
 must match the eye, external-view HUDs, an early headset gate, crash soaks and a crash ledger,
 and `frame_check.py` same-pose and near/far checks.
+The 2026-11-28 revision adds lessons from a third build (a third-person action game on D3D11):
+a [player sim](skills/vr-mod-test-harness/references/player-sim.md) that freezes the game
+between turns so a vision model can play it and make a save past the intro, judging save
+progress, SteamVR rejecting layers from a DXGI 1.0 factory, early proxy calls from app-compat
+shims, CPU-built per-object matrices, and per-frame inputs that differ between two render
+passes. Seen in one game so far.
 
 **Licence:** [MIT](LICENSE). Use it, change it, ship it in your own mods, commercial or not; just
 keep the copyright notice with any copies of the kit itself.

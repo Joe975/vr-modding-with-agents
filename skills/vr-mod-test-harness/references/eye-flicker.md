@@ -84,6 +84,12 @@ Things an engine may compute per view but store or index in a way the second vie
   eye's history. Give view-dependent accumulation its own history per eye. Share genuinely
   view-independent state only with an explicit once-per-frame update contract; skipping one update
   is not a substitute for private TAA history.
+- **Per-frame inputs that change between the passes.** A second render call can see a later
+  shader clock (time is uploaded per pass), skinning bone palettes rebuilt between the passes,
+  or small compute buffers the first pass updated (auto-exposure). The eyes then animate or
+  expose differently. Compare constant-buffer uploads between the passes to find them, save them
+  before pass 1 and restore them before pass 2. Keep each restore behind a switch: restoring a
+  buffer that should be per eye makes things worse.
 - Selection that waits on an earlier frame's occlusion query can also lag under fast motion, but
   test it: forcing everything visible is a quick A/B. Register the bypass and measure its real-scene
   cost before keeping it. The full ownership and either-eye visibility checks are in

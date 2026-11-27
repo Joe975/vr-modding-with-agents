@@ -27,7 +27,14 @@ recommendation the human can argue with.
 
 - Graphics API (D3D11, D3D12, Vulkan): decides the swapchain and texture-sharing code.
 - Where the camera, the projection matrix and the frame boundary live. Ghidra headless and
-  RenderDoc fill the gaps the web doesn't.
+  RenderDoc fill the gaps the web doesn't. Some games can't be captured by a frame debugger at
+  all (they stop presenting under it). Budget for a small frame logger in the mod's proxy:
+  per-draw shaders and constant buffers by name, plus the CPU address each upload was copied
+  from. Following a matrix back to its source address is a reliable way to find the camera.
+- Whether per-object matrices are built on the CPU. An engine that uploads a premultiplied
+  object-to-clip matrix per draw ignores a swapped view constant buffer, so a second eye needs
+  the place where the render thread builds those matrices from one view block, and its own
+  block per eye.
 - Every camera that renders a frame (child cameras for lighting masks, outlines, overlays) and
   every field that shapes the picture: a separate field of view for first-person arms and held
   items, near/far planes, offsets. Note which systems compute their own frustum from field of view
@@ -85,6 +92,12 @@ it and say what's needed.
 Before any headset work, the first experiment is on the flat screen: shift the camera by a known
 amount and check the scene moves by the predicted fraction of the screen width. That one test
 shows the camera hook is real before anything else is built on it.
+
+A `dxgi.dll` proxy can be called before the game's own code runs: Windows app-compat shims may
+call into dxgi during process start-up. Loading the real DLL there, or in `DllMain`, can crash
+or deadlock. Record such early calls and replay them after the first real factory call has
+loaded the system DLL. Test the proxy with the game's real compatibility settings, not only a
+clean process.
 
 ## Output
 
