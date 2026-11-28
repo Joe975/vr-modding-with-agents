@@ -3,6 +3,9 @@
 Skills and project instructions for adding VR to existing flat-screen PC games with Codex or
 Claude Code. The writeup behind it: [joe975.github.io/vr-modding-writeup](https://joe975.github.io/vr-modding-writeup/).
 
+If the kit saves you some time, tips on [Ko-fi](https://ko-fi.com/ourweirdfuture) help pay for the
+AI subs and API credits behind it.
+
 ## Quick start
 
 Open Codex or Claude Code in your mod's folder (an empty one is fine) and tell it:
